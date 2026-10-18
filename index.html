@@ -7,147 +7,104 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;color:#fff;font-family:Arial,sans-serif}
-.ad{background:#00ff88;color:#000;text-align:center;padding:14px;font-weight:900;margin:8px;border-radius:12px;cursor:pointer;font-size:14px}
+.ad{background:#00ff88;color:#000;text-align:center;padding:14px;font-weight:900;margin:8px;border-radius:12px;cursor:pointer}
 .ad.mid{background:transparent;border:2px dashed #00ff88;color:#00ff88}
 .top{background:#111;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #00ff88}
 .tabs{display:flex;gap:8px;padding:12px;background:#0f0f0f;overflow-x:auto}
 .tab{border:0;background:#222;color:#aaa;padding:10px 16px;border-radius:12px;font-weight:900;cursor:pointer;min-width:110px;text-align:center;line-height:1.2}
 .tab small{display:block;font-size:10px;font-weight:400;margin-top:2px}
 .tab.active{background:#00ff88;color:#000}
-.league{background:#111;border-left:4px solid #00ff88;color:#00ff88;padding:10px 14px;font-weight:900;font-size:12px;margin-top:18px;letter-spacing:0.5px}
+.league{background:#111;border-left:4px solid #00ff88;color:#00ff88;padding:10px 14px;font-weight:900;font-size:12px;margin-top:18px}
 .match{display:flex;align-items:center;padding:12px 10px;background:#161616;border-bottom:1px solid #222;cursor:pointer}
-.left{width:125px;display:flex;flex-direction:column;gap:1px}
+.left{width:110px;display:flex;flex-direction:column;gap:2px}
 .left .time{color:#00ff88;font-weight:900;font-size:16px}
-.left .date{color:#fff;font-size:10px;font-weight:700}
-.left .country{color:#888;font-size:9px;font-weight:800;text-transform:uppercase;margin-top:3px}
-.left .lname{color:#bbb;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.left .country{color:#888;font-size:10px;font-weight:800;text-transform:uppercase;margin-top:4px}
+.left .lname{color:#bbb;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:105px}
 .mid{flex:1;padding-left:12px;font-size:14px;line-height:1.3}
 .score{width:55px;text-align:center;font-weight:900;font-size:15px}
-.live{color:#ff3b3b;font-weight:900;animation:blink 1s infinite}
-@keyframes blink{50%{opacity:0.5}}
 #pop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999;justify-content:center;align-items:center;padding:16px}
 .box{background:#171717;border:2px solid #00ff88;border-radius:20px;padding:22px;width:100%;max-width:380px;text-align:center}
 .btn{background:#00ff88;color:#000;border:0;padding:14px;width:100%;border-radius:99px;font-weight:900;margin-top:14px;cursor:pointer}
 </style>
 </head>
 <body>
-
 <div class="ad" onclick="window.open('https://google.com','_blank')">🔥 AD TOP - CLICK HERE 🔥</div>
-
-<div class="top">
-<div><b style="color:#00ff88;font-size:18px">⚽ GREEN FLASH</b><br><small style="color:#777;font-size:11px">FRESH • TIME + DATE • LEFT SIDE</small></div>
-<div style="color:#00ff88;font-weight:900;font-size:12px" id="todayLabel"></div>
-</div>
-
+<div class="top"><div><b style="color:#00ff88;font-size:18px">⚽ GREEN FLASH</b><br><small style="color:#777;font-size:11px">FRESH • TIME • LEFT SIDE</small></div><div style="color:#00ff88;font-weight:900;font-size:12px" id="todayLabel"></div></div>
 <div class="tabs" id="tabs"></div>
-
 <div class="ad mid" onclick="window.open('https://google.com','_blank')">💰 AD MID - CLICK HERE 💰</div>
-
-<div id="games"><p style="padding:50px;text-align:center;color:#00ff88">Loading fresh games...</p></div>
-
-<div id="pop" onclick="if(event.target==this)closePop()">
-<div class="box">
-<h3 id="ptitle" style="color:#00ff88;margin-bottom:8px">MATCH</h3>
-<p id="pmeta" style="color:#888;font-size:11px;margin-bottom:12px"></p>
-<div style="display:flex;gap:10px;margin:16px 0">
-<div style="flex:1;background:#000;padding:14px;border-radius:12px"><small style="color:#00ff88">HT SCORE</small><br><b id="ht" style="font-size:18px">-</b></div>
-<div style="flex:1;background:#000;padding:14px;border-radius:12px"><small style="color:#00ff88">FT SCORE</small><br><b id="ft" style="font-size:18px">-</b></div>
-</div>
-<button class="btn" onclick="closePop()">CLOSE</button>
-</div>
-</div>
-
+<div id="games"><p style="padding:50px;text-align:center;color:#00ff88">Loading...</p></div>
+<div id="pop" onclick="if(event.target==this)closePop()"><div class="box"><h3 id="ptitle" style="color:#00ff88;margin-bottom:8px">MATCH</h3><p id="pmeta" style="color:#888;font-size:11px;margin-bottom:12px"></p><div style="display:flex;gap:10px;margin:16px 0"><div style="flex:1;background:#000;padding:14px;border-radius:12px"><small style="color:#00ff88">HT</small><br><b id="ht" style="font-size:18px">-</b></div><div style="flex:1;background:#000;padding:14px;border-radius:12px"><small style="color:#00ff88">FT</small><br><b id="ft" style="font-size:18px">-</b></div></div><button class="btn" onclick="closePop()">CLOSE</button></div></div>
 <script>
-let ALL_MATCHES = [];
-
-function fmt(d){ return d.toISOString().split('T')[0]; }
-function fmtDisplay(d){ 
-  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}); 
-}
-function addDays(d,n){ let x=new Date(d); x.setDate(x.getDate()+n); return x; }
-
-let TODAY = new Date();
-document.getElementById('todayLabel').textContent = fmt(TODAY);
-
-let DATES = [
-  { label:'YESTERDAY', date: fmt(addDays(TODAY,-1)), display: fmtDisplay(addDays(TODAY,-1)) },
-  { label:'TODAY', date: fmt(TODAY), display: fmtDisplay(TODAY) },
-  { label:'TOMORROW', date: fmt(addDays(TODAY,1)), display: fmtDisplay(addDays(TODAY,1)) },
-  { label: fmtDisplay(addDays(TODAY,2)), date: fmt(addDays(TODAY,2)), display: fmtDisplay(addDays(TODAY,2)) }
+let ALL_MATCHES=[];
+function fmt(d){return d.toISOString().split('T')[0];}
+function fmtDisplay(d){return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});}
+function addDays(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x;}
+let TODAY=new Date();
+document.getElementById('todayLabel').textContent=fmt(TODAY);
+let DATES=[
+{label:'YESTERDAY',date:fmt(addDays(TODAY,-1)),display:fmtDisplay(addDays(TODAY,-1))},
+{label:'TODAY',date:fmt(TODAY),display:fmtDisplay(TODAY)},
+{label:'TOMORROW',date:fmt(addDays(TODAY,1)),display:fmtDisplay(addDays(TODAY,1))},
+{label:fmtDisplay(addDays(TODAY,2)),date:fmt(addDays(TODAY,2)),display:fmtDisplay(addDays(TODAY,2))}
 ];
-
 function buildTabs(){
-  let h='';
-  DATES.forEach((x,i)=>{
-    h+=`<button class="tab ${i===1?'active':''}" onclick="loadDate('${x.date}',this)">${x.label}<small>${x.display} • ${x.date}</small></button>`;
-  });
-  document.getElementById('tabs').innerHTML=h;
-  loadDate(DATES[1].date, null);
+let h='';
+DATES.forEach((x,i)=>{h+=`<button class="tab ${i===1?'active':''}" onclick="loadDate('${x.date}',this)">${x.label}<small>${x.display} • ${x.date}</small></button>`;});
+document.getElementById('tabs').innerHTML=h;
+loadDate(DATES[1].date,null);
 }
-
-async function loadDate(dateStr, el){
-  if(el){
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    el.classList.add('active');
-  }
-  document.getElementById('games').innerHTML=`<p style="padding:40px;text-align:center;color:#00ff88">Loading ${dateStr}...</p>`;
-  try{
-    let r = await fetch('/matches?date='+dateStr+'&t='+Date.now());
-    let j = await r.json();
-    ALL_MATCHES = j.data?.matches || [];
-    if(j.error){ console.log('API Error:', j.error); }
-    render(dateStr);
-  }catch(e){
-    document.getElementById('games').innerHTML=`<p style="padding:40px;text-align:center;color:#ff4444">Error loading<br><small style="color:#888">${e.message}<br>Check FOOTBALL_API_KEY in Cloudflare</small></p>`;
-  }
+async function loadDate(dateStr,el){
+if(el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+document.getElementById('games').innerHTML=`<p style="padding:40px;text-align:center;color:#00ff88">Loading ${dateStr}...</p>`;
+try{
+let r=await fetch('/matches?date='+dateStr+'&t='+Date.now());
+let j=await r.json();
+ALL_MATCHES=j.data?.matches||[];
+render(dateStr);
+}catch(e){
+document.getElementById('games').innerHTML=`<p style="padding:40px;text-align:center;color:#ff4444">Error<br><small>${e.message}</small></p>`;
 }
-
+}
 function render(dateStr){
-  if(!ALL_MATCHES.length){
-    document.getElementById('games').innerHTML=`<p style="padding:50px;text-align:center;color:#aaa">No games for ${dateStr}<br><br><small style="color:#666">Your API key still get credit?<br>Try YESTERDAY tab - e get more games.<br>If all empty, go Cloudflare > Settings > Variables > Update FOOTBALL_API_KEY > Save > Retry Deployment</small></p>`;
-    return;
-  }
-  // Group by Country + League
-  let groups={};
-  ALL_MATCHES.forEach(m=>{
-    let key = (m.league.country||'World')+'|'+(m.league.name||'League');
-    if(!groups[key]) groups[key]={country:m.league.country, name:m.league.name, list:[]};
-    groups[key].list.push(m);
-  });
-
-  let html='';
-  Object.keys(groups).sort().forEach(k=>{
-    let g=groups[k];
-    html+=`<div class="league">${g.country.toUpperCase()} • ${g.name.toUpperCase()} • ${dateStr}</div>`;
-    g.list.forEach(m=>{
-      let timeDisplay = m.status==='finished'?'FT': m.status==='live'? `<span class="live">${m.liveMinute||'LIVE'}</span>` : m.time;
-      let score = (m.ft_home!=null)? `${m.ft_home} - ${m.ft_away}` : '-';
-      html+=`<div class="match" onclick="openPop('${m.id}')">
-        <div class="left">
-          <div class="time">${timeDisplay}</div>
-          <div class="date">${dateStr}</div>
-          <div class="country">${g.country}</div>
-          <div class="lname">${g.name}</div>
-        </div>
-        <div class="mid">${m.home.name}<br><span style="color:#888">vs</span> ${m.away.name}</div>
-        <div class="score">${score}</div>
-      </div>`;
-    });
-  });
-  document.getElementById('games').innerHTML=html;
+if(!ALL_MATCHES.length){
+document.getElementById('games').innerHTML=`<p style="padding:50px;text-align:center;color:#aaa">No games for ${dateStr}</p>`;return;
 }
-
+let groups={};
+ALL_MATCHES.forEach(m=>{
+let key=(m.league.country||'World')+'|'+(m.league.name||'League');
+if(!groups[key])groups[key]={country:m.league.country,name:m.league.name,list:[]};
+groups[key].list.push(m);
+});
+let html='';
+Object.keys(groups).sort().forEach(k=>{
+let g=groups[k];
+html+=`<div class="league">${g.country.toUpperCase()} • ${g.name.toUpperCase()} • ${dateStr}</div>`;
+g.list.forEach(m=>{
+let timeDisplay=m.status==='finished'?'FT':m.status==='live'?`<span style="color:#ff3b3b;font-weight:900">${m.liveMinute||'LIVE'}</span>`:m.time;
+let score=(m.ft_home!=null)?`${m.ft_home} - ${m.ft_away}`:'-';
+html+=`<div class="match" onclick="openPop('${m.id}')">
+<div class="left">
+<div class="time">${timeDisplay}</div>
+<div class="country">${g.country}</div>
+<div class="lname">${g.name}</div>
+</div>
+<div class="mid">${m.home.name}<br><span style="color:#888">vs</span> ${m.away.name}</div>
+<div class="score">${score}</div>
+</div>`;
+});
+});
+document.getElementById('games').innerHTML=html;
+}
 function openPop(id){
-  let m=ALL_MATCHES.find(x=>String(x.id)===String(id));
-  if(!m) return;
-  document.getElementById('ptitle').textContent = m.home.name+' vs '+m.away.name;
-  document.getElementById('pmeta').textContent = `${m.league.country} • ${m.league.name} • ${m.time} • ${m.status} • Date: ${document.querySelector('.tab.active small')?.textContent||''}`;
-  document.getElementById('ht').textContent = (m.ht_home!=null)? `${m.ht_home} - ${m.ht_away}` : '0 - 0';
-  document.getElementById('ft').textContent = (m.ft_home!=null)? `${m.ft_home} - ${m.ft_away}` : '-';
-  document.getElementById('pop').style.display='flex';
+let m=ALL_MATCHES.find(x=>String(x.id)===String(id));
+if(!m)return;
+document.getElementById('ptitle').textContent=m.home.name+' vs '+m.away.name;
+document.getElementById('pmeta').textContent=`${m.league.country} • ${m.league.name} • ${m.time} • ${m.status} • ${m.date||''}`;
+document.getElementById('ht').textContent=(m.ht_home!=null)?`${m.ht_home} - ${m.ht_away}`:'0 - 0';
+document.getElementById('ft').textContent=(m.ft_home!=null)?`${m.ft_home} - ${m.ft_away}`:'-';
+document.getElementById('pop').style.display='flex';
 }
-function closePop(){ document.getElementById('pop').style.display='none'; }
-
+function closePop(){document.getElementById('pop').style.display='none';}
 buildTabs();
 </script>
 </body>
