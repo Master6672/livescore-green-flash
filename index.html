@@ -6,33 +6,27 @@
 <title>LiveScore HT-FT</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#080f0a;color:#fff;font-family:Arial,sans-serif}
-.top{background:#0a1a0f;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1a3322}
-.top b{color:#00ff88}
-.top small{color:#00c853;font-size:10px}
+body{background:#070f09;color:#fff;font-family:Arial,sans-serif}
+.top{background:#0a1a0f;padding:10px 12px;display:flex;justify-content:space-between;border-bottom:1px solid #1a3322}
+.top b{color:#00ff88}.top small{color:#00c853;font-size:10px}
 .ad{border:2px dashed #00c853;color:#00c853;text-align:center;padding:12px;margin:8px;border-radius:10px;font-weight:900;font-size:12px;cursor:pointer}
-.tabs{display:flex;gap:6px;padding:10px;overflow-x:auto;background:#080f0a}
-.tab{background:#1a3322;color:#aaa;border:0;padding:8px 12px;border-radius:12px;min-width:75px;line-height:1.2;font-weight:700;cursor:pointer}
-.tab b{display:block;font-size:13px;color:#fff}
-.tab.active{background:#00ff88;color:#000}
-.tab.active b{color:#000}
-.filters{display:flex;gap:6px;padding:10px;overflow-x:auto;border-bottom:1px solid #122218;background:#080f0a}
+.tabs{display:flex;gap:6px;padding:10px;overflow-x:auto}
+.tab{background:#1a3322;color:#aaa;border:0;padding:8px 10px;border-radius:12px;min-width:68px;line-height:1.2;font-weight:700;cursor:pointer;text-align:center}
+.tab b{display:block;font-size:12px;color:#fff}
+.tab.active{background:#00ff88;color:#000}.tab.active b{color:#000}
+.filters{display:flex;gap:6px;padding:10px;overflow-x:auto;border-bottom:1px solid #122218}
 .f{background:#1a3322;color:#888;border:0;padding:7px 14px;border-radius:99px;font-weight:700;font-size:12px;cursor:pointer}
 .f.active{background:#fff;color:#000}
 .league{background:#132318;padding:10px 12px;display:flex;justify-content:space-between;border-left:4px solid #00c853;font-size:13px;font-weight:700}
-.league small{color:#6b8a70;font-weight:400;font-size:11px}
-.match{display:flex;align-items:center;padding:11px 10px;background:#080f0a;border-bottom:1px solid #132318;cursor:pointer}
-.match:active{background:#122218}
-.time{width:48px;color:#00ff88;font-weight:900;font-size:13px}
+.league small{color:#6b8a70;font-size:11px}
+.match{display:flex;align-items:center;padding:11px 10px;background:#070f09;border-bottom:1px solid #132318;cursor:pointer}
+.match:active{background:#132318}
+.time{width:52px;color:#00ff88;font-weight:900;font-size:13px}
 .teams{flex:1;font-size:14px;line-height:1.3}
-.score{width:60px;text-align:right;font-weight:900;font-size:14px}
-.score.green{color:#00ff88}
-.score.red{color:#ff3b3b}
-.score.vs{color:#00ff88;font-size:12px}
+.score{width:68px;text-align:right;font-weight:900;font-size:14px}
+.green{color:#00ff88}.red{color:#ff3b3b}.dim{color:#00ff88}
 #pop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;justify-content:center;align-items:center;padding:16px}
 .box{background:#121f15;border:2px solid #00ff88;border-radius:18px;padding:20px;width:100%;max-width:360px;text-align:center}
-.box h3{color:#00ff88;margin-bottom:6px;font-size:16px}
-.box p{color:#888;font-size:11px;margin-bottom:12px}
 .scores{display:flex;gap:10px;margin:14px 0}
 .scores div{flex:1;background:#070f0a;padding:14px;border-radius:12px;border:1px solid #1a3322}
 .btn{background:#00ff88;color:#000;border:0;padding:12px;width:100%;border-radius:99px;font-weight:900;margin-top:10px;cursor:pointer}
@@ -40,23 +34,23 @@ body{background:#080f0a;color:#fff;font-family:Arial,sans-serif}
 </head>
 <body>
 <div class="top"><b>⚽ LiveScore HT-FT</b><small>FAST • GREEN • BLACK</small></div>
-<div class="ad" onclick="window.open('https://t.me/YOUR_TELEGRAM','_blank')">AD SPACE TOP - CLICKABLE → Your Telegram</div>
+<div class="ad" onclick="window.open('https://t.me/YOUR_TELEGRAM','_blank')">AD SPACE TOP - CLICKABLE → Telegram</div>
 <div class="tabs" id="tabs"></div>
 <div class="filters">
 <button class="f active" onclick="setF('all',this)">Games</button>
 <button class="f" onclick="setF('live',this)">Live</button>
 <button class="f" onclick="setF('finished',this)">Finished</button>
 <button class="f" onclick="location.reload()">↻ Refresh</button>
-<button class="f" onclick="toggleSort()" id="sortBtn">Top 1-10 ⌄</button>
+<button class="f" id="sortBtn" onclick="toggleSort()">Top 1-10 ⌄</button>
 </div>
-<div class="ad" onclick="window.open('https://YOUR_AD.com','_blank')">AD SPACE MID - CLICKABLE → Your Ad Link</div>
+<div class="ad" onclick="window.open('https://YOUR_AD.com','_blank')">AD SPACE MID - CLICKABLE → Your Ad</div>
 <div id="games"><p style="padding:40px;text-align:center;color:#00ff88">Loading...</p></div>
 
 <div id="pop" onclick="if(event.target==this)closePop()"><div class="box">
-<h3 id="ptitle">MATCH</h3><p id="pmeta"></p>
+<h3 id="ptitle" style="color:#00ff88">MATCH</h3><p id="pmeta" style="color:#888;font-size:11px"></p>
 <div class="scores">
-<div><small style="color:#00ff88">HT SCORE</small><br><b id="ht" style="font-size:20px">-</b></div>
-<div><small style="color:#00ff88">FT SCORE</small><br><b id="ft" style="font-size:20px">-</b></div>
+<div><small style="color:#00ff88">HT</small><br><b id="ht" style="font-size:20px">-</b></div>
+<div><small style="color:#00ff88">FT</small><br><b id="ft" style="font-size:20px">-</b></div>
 </div>
 <button class="btn" onclick="closePop()">CLOSE</button>
 </div></div>
@@ -69,7 +63,6 @@ function add(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x;}
 function dayName(d){return d.toLocaleDateString('en-US',{weekday:'short'});}
 
 let TODAY=new Date();
-// 3 DAYS BACK + TODAY + 4 DAYS FUTURE = 8 DAYS
 let DATES=[
  {label: dayName(add(TODAY,-3)), sub: fmtMD(add(TODAY,-3)), date: fmt(add(TODAY,-3))},
  {label: dayName(add(TODAY,-2)), sub: fmtMD(add(TODAY,-2)), date: fmt(add(TODAY,-2))},
@@ -83,8 +76,7 @@ let DATES=[
 
 function build(){
  let h=''; DATES.forEach((d,i)=>{
-  let active=i===3?'active':'';
-  h+=`<button class="tab ${active}" onclick="loadD('${d.date}',this)"><b>${d.label}</b>${d.sub}</button>`;
+  h+=`<button class="tab ${i===3?'active':''}" onclick="loadD('${d.date}',this)"><b>${d.label}</b>${d.sub}</button>`;
  }); document.getElementById('tabs').innerHTML=h; loadD(DATES[3].date,null);
 }
 async function loadD(date,el){
@@ -92,35 +84,33 @@ async function loadD(date,el){
  document.getElementById('games').innerHTML=`<p style="padding:30px;text-align:center;color:#00ff88">Loading ${date}...</p>`;
  try{
   let r=await fetch('/matches?date='+date+'&t='+Date.now()); let j=await r.json();
-  ALL=j.data?.matches||[]; render();
- }catch{ document.getElementById('games').innerHTML=`<p style="padding:30px;text-align:center;color:#555">No games</p>`; }
+  ALL=j.data?.matches||[]; console.log('Matches for',date,j); render();
+ }catch(e){ document.getElementById('games').innerHTML=`<p style="padding:30px;text-align:center;color:#555">No games: ${e.message}</p>`; }
 }
 function setF(f,el){FILTER=f;document.querySelectorAll('.f').forEach(b=>{if(b.id!=='sortBtn')b.classList.remove('active')});el.classList.add('active');render();}
 function toggleSort(){SORT=!SORT;document.getElementById('sortBtn').textContent=SORT?'Top 1-10 ⌄':'A-Z ⌄';render();}
 function render(){
  let list=ALL.filter(m=>{if(FILTER==='live'&&m.status!=='live')return false;if(FILTER==='finished'&&m.status!=='finished')return false;return true;});
- if(SORT){ const o={England:1,Spain:2,Germany:3,Italy:4,France:5,World:99}; list.sort((a,b)=>(o[a.league.country]||50)-(o[b.league.country]||50)); }
+ if(SORT){ const o={England:1,Spain:2,Germany:3,Italy:4,France:5}; list.sort((a,b)=>(o[a.league.country]||50)-(o[b.league.country]||50)); }
  let groups={}; list.forEach(m=>{let k=m.league.country+' - '+m.league.name; if(!groups[k])groups[k]={name:k,c:0,list:[]}; groups[k].list.push(m); groups[k].c++;});
  let html=''; Object.keys(groups).forEach(k=>{
   let g=groups[k];
   html+=`<div class="league"><div>${g.name} (${g.c})</div><small>Standings >></small></div>`;
   g.list.forEach(m=>{
-   let score='', cls='score vs';
-   if(m.status==='live' && m.ft_home!=null){ score=m.ft_home+' - '+m.ft_away+' <small>'+m.liveMinute+'</small>'; cls='score red'; }
-   else if(m.status==='finished' && m.ft_home!=null){ score=m.ft_home+' - '+m.ft_away; cls='score green'; }
+   let score='', cls='score dim';
+   if(m.status==='live' && m.ft_home!=null){ score=m.ft_home+' - '+m.ft_away+' '+m.liveMinute; cls='score red'; }
    else if(m.ft_home!=null){ score=m.ft_home+' - '+m.ft_away; cls='score green'; }
-   else { score='vs'; cls='score vs'; }
-   let t=m.time||'15:00';
-   html+=`<div class="match" onclick="openPop('${m.id}')"><div class="time">${t}</div><div class="teams">${m.home.name}<br>${m.away.name}</div><div class="${cls}">${score}</div></div>`;
+   else { score='vs'; cls='score dim'; }
+   html+=`<div class="match" onclick="openPop('${m.id}')"><div class="time">${m.time||'15:00'}</div><div class="teams">${m.home.name}<br>${m.away.name}</div><div class="${cls}">${score}</div></div>`;
   });
  });
- document.getElementById('games').innerHTML=html||`<p style="padding:40px;text-align:center;color:#666">No matches</p>`;
+ document.getElementById('games').innerHTML=html||`<p style="padding:40px;text-align:center;color:#666">No matches for this date. Try Yesterday - that one get results!</p>`;
 }
 function openPop(id){
  let m=ALL.find(x=>String(x.id)===String(id)); if(!m)return;
  document.getElementById('ptitle').textContent=m.home.name+' vs '+m.away.name;
- document.getElementById('pmeta').textContent=`${m.league.country} • ${m.league.name} • ${m.time} • ${m.status}`;
- document.getElementById('ht').textContent=(m.ht_home!=null)?`${m.ht_home} - ${m.ht_away}`:'0 - 0';
+ document.getElementById('pmeta').textContent=`${m.league.country} • ${m.league.name} • ${m.time} • ${m.status.toUpperCase()}`;
+ document.getElementById('ht').textContent=(m.ht_home!=null)?`${m.ht_home} - ${m.ht_away}`:'-';
  document.getElementById('ft').textContent=(m.ft_home!=null)?`${m.ft_home} - ${m.ft_away}`:'vs';
  document.getElementById('pop').style.display='flex';
 }
