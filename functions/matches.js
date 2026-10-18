@@ -17,12 +17,17 @@ export async function onRequestGet(context) {
 
     function europeTime(ts, iso) {
       try {
-        let d;
-        if (ts && ts > 1000000) d = new Date(ts * 1000);
-        else if (ts && ts > 100000000000) d = new Date(ts);
-        else if (iso) d = new Date(iso);
-        else return "-";
-        if (isNaN(d.getTime())) return "-";
+        let d = null;
+        if (ts && Number(ts) > 10000) {
+          d = new Date(Number(ts) * 1000);
+        } else if (iso) {
+          d = new Date(iso);
+        }
+        if (!d || isNaN(d.getTime())) {
+          // try extract time like 19:45 from iso string
+          if (iso && iso.includes("T")) return iso.split("T")[1].substring(0,5);
+          return "-";
+        }
         return new Intl.DateTimeFormat("en-GB", {
           hour: "2-digit",
           minute: "2-digit",
@@ -34,53 +39,40 @@ export async function onRequestGet(context) {
       }
     }
 
-    function getPrioAndFilter(m) {
-      const n = (m.league?.name || "").toLowerCase();
+    function getPrio(m) {
+      const name = (m.league?.name || "").toLowerCase();
       const country = (m.league?.country || "").toLowerCase();
-      
-      // BLOCK AFRICA LEAGUES FROM EUROPE TOP 10
-      if (n.includes("caf") || n.includes("african") || country.includes("caf")) {
-        return 99;
-      }
 
-      // ONLY UEFA CHAMPIONS LEAGUE, NOT CAF
-      if (n.includes("champions league")) {
-        if (n.includes("uefa") || n.includes("europe") || country === "europe" || country === "") return 1;
+      // CAF / Africa Champions League = NOT Europe - put for Other A-Z
+      if (name.includes("caf") || name.includes("african")) return 99;
+
+      if (name.includes("champions league")) {
+        if (name.includes("caf")) return 99;
+        return 1; // UEFA Champions League for up
+      }
+      if (name.includes("europa league") && !name.includes("conference")) return 2;
+      if (name.includes("conference league")) return 3;
+      
+      if (name.includes("premier league")) {
+        // Only England Premier League for Top 4, Mongolia etc go Other A-Z
+        if (country.includes("england") || name.includes("english")) return 4;
         return 99;
       }
-      if (n.includes("europa league") && !n.includes("conference")) {
-        if (n.includes("uefa") || country === "europe" || country === "") return 2;
-        return 99;
-      }
-      if (n.includes("conference league")) return 3;
-      if (n.includes("premier league") && (country.includes("england") || n.includes("english"))) return 4;
-      if (n.includes("premier league")) return 99; // block Mongolia premier league like Ulaanbaatar
-      if (n.includes("ligue 1")) return 5;
-      if (n.includes("bundesliga")) return 6;
-      if (n.includes("serie a") || n.includes("series a")) return 7;
-      if (n.includes("la liga") || n.includes("laliga") || n.includes("primera division")) return 8;
-      if (n.includes("eredivisie")) return 9;
-      if (n.includes("primeira liga") || n.includes("liga portugal")) return 10;
+      if (name.includes("ligue 1")) return 5;
+      if (name.includes("bundesliga")) return 6;
+      if (name.includes("serie a") || name.includes("series a")) return 7;
+      if (name.includes("la liga") || name.includes("laliga")) return 8;
+      if (name.includes("eredivisie")) return 9;
+      if (name.includes("primeira liga") || name.includes("liga portugal")) return 10;
       return 99;
     }
 
     let out = [];
     for (let m of list) {
-      const p = getPrioAndFilter(m);
-      if (p > 10) continue; // ONLY SHOW TOP 10 EUROPE NOW - NO OTHER LEAGUE
-
+      const p = getPrio(m);
       const ts = m.fixture?.timestamp || m.timestamp || 0;
       const iso = m.fixture?.date || m.date || "";
       let time = europeTime(ts, iso);
-      
-      // If time still "-" try get time from iso string directly like "2026-10-18T19:45:00"
-      if (time === "-" && iso && iso.includes("T")) {
-        try {
-          const tPart = iso.split("T")[1].substring(0,5);
-          const d = new Date(iso);
-          time = new Intl.DateTimeFormat("en-GB",{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Berlin'}).format(d) || tPart;
-        } catch {}
-      }
 
       let fh = m.goals?.home ?? m.score?.fulltime?.home ?? m.home?.score ?? null;
       let fa = m.goals?.away ?? m.score?.fulltime?.away ?? null;
@@ -98,7 +90,6 @@ export async function onRequestGet(context) {
         status = "finished";
       }
 
-      // Don't null scores for finished/live - keep them!
       if (status === "notstarted") {
         fh = null;
         fa = null;
@@ -111,18 +102,20 @@ export async function onRequestGet(context) {
         priority: p,
         status: status,
         liveMinute: live,
-        home: { name: m.home?.name || m.homeTeam?.name || "Home" },
-        away: { name: m.away?.name || m.awayTeam?.name || "Away" },
+        home: { name: m.home?.name || "Home" },
+        away: { name: m.away?.name || "Away" },
         ht_home: hh,
         ht_away: ha,
         ft_home: fh,
         ft_away: fa,
-        league: { name: m.league?.name || "", country: m.league?.country || "", priority: p }
+        league: { name: m.league?.name || "Other", country: m.league?.country || "", priority: p }
       });
     }
 
+    // TOP 10 FIRST, THEN OTHER A-Z
     out.sort((a, b) => {
       if (a.priority !== b.priority) return a.priority - b.priority;
+      if (a.priority === 99) return a.league.name.localeCompare(b.league.name);
       return a.ts - b.ts;
     });
 
