@@ -70,18 +70,13 @@ async function loadMatches(){
  try{let r=await fetch(`/api/matches?date=${curDate}`);let j=await r.json();allMatches=j.data?.matches||j.matches||j.data||[];if(!Array.isArray(allMatches))allMatches=[];}catch(e){document.getElementById('list').innerHTML=`<div style="padding:30px;text-align:center;color:#ff5252">API Error</div>`;return;}
  render();
 }
-// FIXED TIME - SAME AS FLASHSCORE
 function getTimeStr(m){
- let raw=(m.time||"").toString().trim();
- if(!raw) return (m.status==='finished'||m.status==='FT')?"FT":"-";
- if(/^\d{1,2}:\d{2}$/.test(raw)) return raw;
- let mm=raw.match(/(\d{1,2}:\d{2})/);
- if(mm) return mm[1];
- if(raw.length>10){
-   let d=new Date(raw);
-   if(!isNaN(d)) return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
- }
- return (m.status==='finished'||m.status==='FT')?"FT":"-";
+ let raw=m.time||m.start_time||m.fixture?.date||m.timestamp||"";
+ let country=(m.league?.country||"").toLowerCase();
+ let tz=country==="france"?"Europe/Paris":"Africa/Lagos";
+ if(typeof raw==="number"){let d=new Date(raw*1000);if(!isNaN(d))return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:tz});}
+ if(typeof raw==="string"&&raw){let d=new Date(raw);if(!isNaN(d)){if(raw.length<=10){return (m.status==='finished'||m.status==='FT')?"FT":"NS";}return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:tz});}let mm=raw.match(/(\d{1,2}:\d{2})/);if(mm)return mm[1];}
+ return (m.status==='finished'||m.status==='FT')?"FT":"NS";
 }
 function render(){
  let sort=document.getElementById('sortSel').value;
@@ -107,8 +102,8 @@ function render(){
 function openMatch(idx){
  let m=allMatches[idx];let ft=(m.status==='finished'||m.status==='FT')?`${m.home?.score??'?'} - ${m.away?.score??'?'}`:'Not started';
  let ht=(m.ht&&m.ht.home!=null)?`${m.ht.home} - ${m.ht.away}`:'No HT';let htft=(m.ht&&(m.status==='finished'||m.status==='FT'))?`${m.ht.home}-${m.ht.away} / ${m.home?.score}-${m.away?.score}`:'-';
- let time=getTimeStr(m);
- document.getElementById('modalBox').innerHTML=`<div style="padding:12px;background:#162616;text-align:center;font-weight:900;border-bottom:2px solid #00c853">FT + HT</div><div style="padding:14px"><h3 style="text-align:center">${m.home?.name||'Home'} vs ${m.away?.name||'Away'}</h3><p style="text-align:center;color:#81c784;font-size:12px;margin:6px 0">${m.league?.country||''} - ${m.league?.name||''}<br>${time} • ${m.status||''}</p><div style="background:#081208;padding:14px;border-radius:10px;margin-top:10px"><div style="display:flex;justify-content:space-between;padding:10px 0"><span>FT:</span><b style="color:#00e676;font-size:20px">${ft}</b></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #1a331a"><span>HT:</span><b style="color:#ff9800;font-size:20px">${ht}</b></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #1a331a"><span>HT/FT:</span><b>${htft}</b></div></div></div>`;
+ let time=getTimeStr(m);let tzLabel=(m.league?.country||"").toLowerCase()==="france"?"France Time":"Lagos Time";
+ document.getElementById('modalBox').innerHTML=`<div style="padding:12px;background:#162616;text-align:center;font-weight:900;border-bottom:2px solid #00c853">FT + HT</div><div style="padding:14px"><h3 style="text-align:center">${m.home?.name||'Home'} vs ${m.away?.name||'Away'}</h3><p style="text-align:center;color:#81c784;font-size:12px;margin:6px 0">${m.league?.country||''} - ${m.league?.name||''}<br>${time} ${tzLabel} • ${m.status||''}</p><div style="background:#081208;padding:14px;border-radius:10px;margin-top:10px"><div style="display:flex;justify-content:space-between;padding:10px 0"><span>FT:</span><b style="color:#00e676;font-size:20px">${ft}</b></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #1a331a"><span>HT:</span><b style="color:#ff9800;font-size:20px">${ht}</b></div><div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #1a331a"><span>HT/FT:</span><b>${htft}</b></div></div></div>`;
  document.getElementById('modal').style.display='flex';
 }
 function closeModal(){document.getElementById('modal').style.display='none';}
