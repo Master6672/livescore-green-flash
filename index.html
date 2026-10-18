@@ -1,72 +1,77 @@
-
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LiveScore TOP 10 - Europe Time</title>
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TOP 10 EUROPE - Flashscore Time</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{background:#000;color:#fff;font-family:Arial}
-.ad{background:#00ff88;color:#000;text-align:center;padding:14px;font-weight:900;cursor:pointer;border-radius:8px;margin:8px}
-.head{background:#121212;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #00ff88}
-.tabs{display:flex;gap:6px;padding:10px;background:#121212;overflow-x:auto}
-.tab{border:none;background:#222;color:#aaa;padding:10px 16px;border-radius:20px;font-weight:bold;cursor:pointer}
+*{margin:0;padding:0;box-sizing:border-box}body{background:#000;color:#fff;font-family:Arial,sans-serif}
+.ad{cursor:pointer;background:#00ff88;color:#000;text-align:center;padding:14px;font-weight:900;margin:8px;border-radius:10px}
+.ad.mid{background:transparent;border:2px dashed #00ff88;color:#00ff88}
+.head{background:#0f0f0f;padding:12px 15px;display:flex;justify-content:space-between;border-bottom:2px solid #00ff88}
+.tabs{display:flex;gap:6px;padding:10px;background:#0f0f0f;overflow-x:auto}
+.tab{border:none;background:#222;color:#999;padding:10px 18px;border-radius:20px;font-weight:900;cursor:pointer;white-space:nowrap}
 .tab.active{background:#00ff88;color:#000}
-.league{background:#0d1a0d;color:#00ff88;padding:9px 12px;font-weight:900;font-size:12px;display:flex;justify-content:space-between;border-left:4px solid #00ff88;margin-top:12px;letter-spacing:1px}
-.match{display:flex;align-items:center;padding:14px 12px;background:#111;border-bottom:1px solid #1e1e1e;cursor:pointer}
-.match:hover{background:#1c1c1c}
-.time{color:#00ff88;width:50px;font-weight:900;font-size:15px}
-.teams{flex:1;padding-left:10px;font-size:14px}
-.score{width:45px;text-align:center;font-weight:900;font-size:15px}
-#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);justify-content:center;align-items:center;z-index:100}
-.box{background:#111;border:2px solid #00ff88;border-radius:16px;padding:22px;width:92%;max-width:360px;text-align:center}
-.close{background:#00ff88;color:#000;border:none;padding:12px;width:100%;border-radius:20px;font-weight:900;margin-top:15px;cursor:pointer}
-.badge{background:#00ff88;color:#000;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:6px}
+.league{background:#111;border-left:4px solid #00ff88;color:#00ff88;padding:8px 12px;font-weight:900;font-size:12px;display:flex;justify-content:space-between;margin-top:14px}
+.match{display:flex;align-items:center;padding:14px;background:#161616;border-bottom:1px solid #222;cursor:pointer}
+.match:active{background:#222}
+.time{width:60px;color:#00ff88;font-weight:900}
+.teams{flex:1;font-size:14px}
+.score{width:50px;text-align:center;font-weight:900}
+#pop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99;justify-content:center;align-items:center;padding:15px}
+.box{background:#151515;border:2px solid #00ff88;border-radius:18px;padding:20px;width:100%;max-width:380px;text-align:center}
+.btn{background:#00ff88;color:#000;border:none;padding:12px;width:100%;border-radius:20px;font-weight:900;margin-top:12px;cursor:pointer}
+.live{color:#ff3b3b;font-weight:900}
 </style></head><body>
-<div class="ad" onclick="window.open('https://google.com','_blank')">🔥 AD TOP - CLICK TO EARN 🔥</div>
-<div class="head"><div><b style="color:#00ff88">⚽ TOP 10 EUROPE</b><br><small style="color:#888">Flashscore Europe Time (CET)</small></div><small style="color:#00ff88">LIVE</small></div>
+<div class="ad" onclick="window.open('https://google.com','_blank')">🔥 AD TOP - YOUR AD HERE - CLICKABLE 🔥</div>
+<div class="head"><div><b style="color:#00ff88">⚽ TOP 10 EUROPE</b><br><small style="color:#888">Flashscore Europe Time CET</small></div><div style="color:#00ff88;font-weight:900">LIVE</div></div>
 <div class="tabs">
-<button class="tab" onclick="load('2026-10-17')">YESTERDAY 17</button>
-<button class="tab active" onclick="load('2026-10-18')">TODAY 18</button>
-<button class="tab" onclick="load('2026-10-19')">TOMORROW 19</button>
-<button class="tab" onclick="load('2026-10-20')">20 OCT</button>
+<button class="tab" onclick="loadDate('2026-10-17')">YESTERDAY</button>
+<button class="tab active" onclick="loadDate('2026-10-18')">TODAY</button>
+<button class="tab" onclick="loadDate('2026-10-19')">TOMORROW</button>
+<button class="tab" onclick="loadDate('2026-10-20')">OCT 20</button>
 </div>
-<div class="ad" onclick="window.open('https://google.com','_blank')" style="border:2px dashed #00ff88;background:transparent;color:#00ff88">💰 AD MID - CLICK HERE 💰</div>
-<div id="games" style="padding:0 8px">Loading Top 10...</div>
-<div id="modal" onclick="if(event.target==this)closeM()"><div class="box">
-<h3 id="mtitle" style="color:#00ff88">KICK-OFF: 20:45 CET</h3>
-<div style="display:flex;gap:12px;margin:18px 0"><div style="flex:1;background:#000;padding:15px;border-radius:12px"><b style="color:#00ff88">HALF TIME</b><br><span id="ht" style="font-size:22px;font-weight:900">-</span></div><div style="flex:1;background:#000;padding:15px;border-radius:12px"><b style="color:#00ff88">FULL TIME</b><br><span id="ft" style="font-size:22px;font-weight:900">-</span></div></div>
-<p id="extra" style="color:#888;font-size:12px"></p>
-<div class="ad" onclick="window.open('https://google.com','_blank')" style="margin:12px 0">AD IN POPUP - CLICK</div>
-<button class="close" onclick="closeM()">CLOSE</button>
+<div class="ad mid" onclick="window.open('https://google.com','_blank')">💰 AD MID - CLICKABLE - YOUR ADSENSE HERE 💰</div>
+<div id="games"><p style="padding:40px;text-align:center;color:#00ff88">Loading TOP 10... Europe Time...</p></div>
+<div id="pop" onclick="if(event.target==this)closePop()"><div class="box">
+<h3 id="ptitle" style="color:#00ff88">KICK-OFF: 20:45 CET</h3>
+<div style="display:flex;gap:10px;margin:18px 0">
+<div style="flex:1;background:#000;padding:16px;border-radius:12px"><small style="color:#00ff88">HALF TIME</small><br><b id="ht" style="font-size:24px">-</b></div>
+<div style="flex:1;background:#000;padding:16px;border-radius:12px"><small style="color:#00ff88">FULL TIME</small><br><b id="ft" style="font-size:24px">-</b></div>
+</div>
+<p id="pinfo" style="color:#777;font-size:11px"></p>
+<div class="ad" onclick="window.open('https://google.com','_blank')">AD INSIDE POPUP - CLICKABLE</div>
+<button class="btn" onclick="closePop()">CLOSE</button>
 </div></div>
 <script>
 var all=[],cur='2026-10-18';
-var orderNames={1:'🏆 CHAMPIONS LEAGUE',2:'🏆 EUROPA LEAGUE',3:'🏆 CONFERENCE LEAGUE',4:'🏴󐁧󐁢󐁥󐁮󐁧󐁿 PREMIER LEAGUE',5:'🇫🇷 LIGUE 1',6:'🇩🇪 BUNDESLIGA',7:'🇮🇹 SERIE A',8:'🇪🇸 LA LIGA',9:'🇳🇱 EREDIVISIE',10:'🇵🇹 PRIMEIRA LIGA'};
-async function load(d){
- cur=d;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(event)event.target.classList.add('active');
- document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center;color:#00ff88">Loading Top 10 leagues... Europe Time...</p>';
- try{let r=await fetch('/matches?date='+d);let j=await r.json();all=j.data.matches||[];render();}catch(e){document.getElementById('games').innerHTML='Error - Check API Key';}
+var names={1:'1. CHAMPIONS LEAGUE',2:'2. EUROPA LEAGUE',3:'3. CONFERENCE LEAGUE',4:'4. PREMIER LEAGUE',5:'5. LIGUE 1',6:'6. BUNDESLIGA',7:'7. SERIE A',8:'8. LA LIGA',9:'9. EREDIVISIE',10:'10. PRIMEIRA LIGA'};
+async function loadDate(d){
+ cur=d;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));event.target.classList.add('active');
+ document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center;color:#00ff88">Loading...</p>';
+ try{let r=await fetch('/matches?date='+d);let j=await r.json();all=j.data.matches||[];render();}catch(e){document.getElementById('games').innerHTML='Error - check API key';}
 }
 function render(){
- if(!all.length){document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center">No Top 10 games today<br><small style="color:#888">Only UCL, UEL, EPL, LaLiga etc show here</small></p>';return;}
- let h='';let leagues={};all.forEach(m=>{let k=m.priority;if(!leagues[k])leagues[k]=[];leagues[k].push(m);});
- Object.keys(leagues).sort((a,b)=>a-b).forEach(p=>{
-  let name=orderNames[p]||'TOP LEAGUE';
-  h+='<div class="league"><span>'+name+'</span><span style="color:#666">STANDINGS</span></div>';
-  leagues[p].forEach(m=>{
-   let tm=m.status=='finished'?'FT':(m.status=='live'?(m.liveMinute||'LIVE'):m.time);
+ if(!all.length){document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center">No games today for Top 10<br><small>Other leagues hidden - only Top 10 + A-Z others</small></p>';return;}
+ let html='';let groups={};
+ all.forEach(m=>{let p=m.priority;if(!groups[p])groups[p]=[];groups[p].push(m);});
+ Object.keys(groups).sort((a,b)=>a-b).forEach(p=>{
+  let title=names[p]||groups[p][0].league.name.toUpperCase();
+  if(p==99) title='OTHER LEAGUES A-Z';
+  html+='<div class="league"><span>'+title+'</span><span>▼</span></div>';
+  groups[p].forEach(m=>{
+   let t=m.status=='finished'?'FT':(m.status=='live'?'<span class="live">'+(m.liveMinute||'LIVE')+'</span>':m.time);
    let sc=(m.ft_home!=null)?m.ft_home+' - '+m.ft_away:'-';
-   let liveBadge=m.status=='live'?'<span class="badge">LIVE</span>':'';
-   h+='<div class="match" onclick="openM(\''+m.id+'\')"><div class="time">'+tm+'</div><div class="teams">'+m.home.name+' - '+m.away.name+liveBadge+'</div><div class="score">'+sc+'</div></div>';
+   html+='<div class="match" onclick="openPop(\''+m.id+'\')"><div class="time">'+t+'</div><div class="teams">'+m.home.name+' - '+m.away.name+'</div><div class="score">'+sc+'</div></div>';
   });
  });
- document.getElementById('games').innerHTML=h;
+ document.getElementById('games').innerHTML=html;
 }
-function openM(id){
+function openPop(id){
  let m=all.find(x=>String(x.id)==String(id));if(!m)return;
- document.getElementById('mtitle').textContent='KICK-OFF: '+m.time+' CET';
+ document.getElementById('ptitle').textContent='KICK-OFF: '+m.time+' CET - Europe Time';
  document.getElementById('ht').textContent=(m.ht_home!=null)?m.ht_home+' - '+m.ht_away:'0 - 0';
  document.getElementById('ft').textContent=(m.ft_home!=null)?m.ft_home+' - '+m.ft_away:'-';
- document.getElementById('extra').textContent=m.league.name+' | '+m.status.toUpperCase()+' | Europe Time';
- document.getElementById('modal').style.display='flex';
+ document.getElementById('pinfo').textContent=m.league.name+' | Status: '+m.status.toUpperCase()+' | Time: '+m.time+' CET (Flashscore time, not Africa)';
+ document.getElementById('pop').style.display='flex';
 }
-function closeM(){document.getElementById('modal').style.display='none';}
-load(cur);
+function closePop(){document.getElementById('pop').style.display='none';}
+loadDate(cur);
 </script></body></html>
