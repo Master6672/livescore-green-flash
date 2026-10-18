@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TOP 10 EUROPE - Flashscore CET</title>
+<title>LIVE SCORE - Europe Time CET</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;color:#fff;font-family:Arial,sans-serif}
+body{background:#000;color:#fff;font-family:Arial}
 .ad{background:#00ff88;color:#000;text-align:center;padding:14px;font-weight:900;margin:8px;border-radius:10px;cursor:pointer}
 .ad.mid{background:transparent;border:2px dashed #00ff88;color:#00ff88}
 .head{background:#111;padding:12px 15px;display:flex;justify-content:space-between;border-bottom:2px solid #00ff88}
@@ -15,7 +15,7 @@ body{background:#000;color:#fff;font-family:Arial,sans-serif}
 .tab.active{background:#00ff88;color:#000}
 .league{background:#111;border-left:4px solid #00ff88;color:#00ff88;padding:8px 12px;font-weight:900;font-size:12px;display:flex;justify-content:space-between;margin-top:14px}
 .match{display:flex;align-items:center;padding:14px;background:#161616;border-bottom:1px solid #222;cursor:pointer}
-.time{width:65px;color:#00ff88;font-weight:900}
+.time{width:70px;color:#00ff88;font-weight:900}
 .teams{flex:1;font-size:14px}
 .score{width:50px;text-align:center;font-weight:900}
 #pop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99;justify-content:center;align-items:center;padding:15px}
@@ -26,7 +26,7 @@ body{background:#000;color:#fff;font-family:Arial,sans-serif}
 </head>
 <body>
 <div class="ad" onclick="window.open('https://google.com','_blank')">🔥 AD TOP - CLICKABLE - YOUR AD HERE 🔥</div>
-<div class="head"><div><b style="color:#00ff88">⚽ TOP 10 EUROPE</b><br><small style="color:#888">Flashscore Europe Time CET</small></div><div style="color:#00ff88;font-weight:900">LIVE</div></div>
+<div class="head"><div><b style="color:#00ff88">⚽ LIVE SCORE</b><br><small style="color:#888">All Leagues - Europe Time CET</small></div><div style="color:#00ff88;font-weight:900">LIVE</div></div>
 <div class="tabs">
 <button class="tab" onclick="loadDate('2026-10-17',this)">YESTERDAY</button>
 <button class="tab active" onclick="loadDate('2026-10-18',this)">TODAY</button>
@@ -34,10 +34,10 @@ body{background:#000;color:#fff;font-family:Arial,sans-serif}
 <button class="tab" onclick="loadDate('2026-10-20',this)">OCT 20</button>
 </div>
 <div class="ad mid" onclick="window.open('https://google.com','_blank')">💰 AD MID - CLICKABLE - YOUR ADSENSE HERE 💰</div>
-<div id="games"><p style="padding:40px;text-align:center;color:#00ff88">Loading TOP 10... Europe Time...</p></div>
+<div id="games"><p style="padding:40px;text-align:center;color:#00ff88">Loading all matches... Europe Time...</p></div>
 <div id="pop" onclick="if(event.target==this)closePop()">
 <div class="box">
-<h3 id="ptitle" style="color:#00ff88">KICK-OFF</h3>
+<h3 id="ptitle" style="color:#00ff88">MATCH</h3>
 <div style="display:flex;gap:10px;margin:18px 0">
 <div style="flex:1;background:#000;padding:16px;border-radius:12px"><small style="color:#00ff88">HALF TIME</small><br><b id="ht" style="font-size:24px">-</b></div>
 <div style="flex:1;background:#000;padding:16px;border-radius:12px"><small style="color:#00ff88">FULL TIME</small><br><b id="ft" style="font-size:24px">-</b></div>
@@ -49,7 +49,6 @@ body{background:#000;color:#fff;font-family:Arial,sans-serif}
 </div>
 <script>
 var all=[],cur='2026-10-18';
-var names={1:'1. CHAMPIONS LEAGUE',2:'2. EUROPA LEAGUE',3:'3. CONFERENCE LEAGUE',4:'4. PREMIER LEAGUE',5:'5. LIGUE 1',6:'6. BUNDESLIGA',7:'7. SERIE A',8:'8. LA LIGA',9:'9. EREDIVISIE',10:'10. PRIMEIRA LIGA'};
 async function loadDate(d,el){
  cur=d;
  if(el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
@@ -60,21 +59,19 @@ async function loadDate(d,el){
   all=j.data.matches||[];
   render();
  }catch(e){
-  document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center">Error - Check API Key</p>';
+  document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center">Error loading</p>';
  }
 }
 function render(){
  if(!all.length){
-  document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center">No Top 10 games today<br><small style="color:#888">Other leagues will show A-Z when Top 10 finish</small></p>';
+  document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center">No games for this date</p>';
   return;
  }
  let html='';let groups={};
- all.forEach(m=>{let p=m.priority;if(!groups[p])groups[p]=[];groups[p].push(m);});
- Object.keys(groups).sort((a,b)=>a-b).forEach(p=>{
-  let title=names[p]||groups[p][0].league.name.toUpperCase();
-  if(p==99)title='OTHER LEAGUES A-Z';
-  html+='<div class="league"><span>'+title+'</span><span>▼</span></div>';
-  groups[p].forEach(m=>{
+ all.forEach(m=>{let k=m.league.name;if(!groups[k])groups[k]=[];groups[k].push(m);});
+ Object.keys(groups).sort().forEach(k=>{
+  html+='<div class="league"><span>'+k.toUpperCase()+'</span><span>▼</span></div>';
+  groups[k].forEach(m=>{
    let t=m.status=='finished'?'FT':(m.status=='live'?'<span class="live">'+(m.liveMinute||'LIVE')+'</span>':m.time);
    let sc=(m.ft_home!=null)?m.ft_home+' - '+m.ft_away:'-';
    html+='<div class="match" onclick="openPop(\''+m.id+'\')"><div class="time">'+t+'</div><div class="teams">'+m.home.name+' - '+m.away.name+'</div><div class="score">'+sc+'</div></div>';
@@ -84,10 +81,10 @@ function render(){
 }
 function openPop(id){
  let m=all.find(x=>String(x.id)==String(id));if(!m)return;
- document.getElementById('ptitle').textContent='KICK-OFF: '+m.time+' CET - Europe Time';
+ document.getElementById('ptitle').textContent=m.home.name+' vs '+m.away.name+' - '+m.time+' CET';
  document.getElementById('ht').textContent=(m.ht_home!=null)?m.ht_home+' - '+m.ht_away:'0 - 0';
  document.getElementById('ft').textContent=(m.ft_home!=null)?m.ft_home+' - '+m.ft_away:'-';
- document.getElementById('pinfo').textContent=m.league.name+' | Status: '+m.status.toUpperCase()+' | Europe Time like Flashscore';
+ document.getElementById('pinfo').textContent=m.league.name+' | Status: '+m.status.toUpperCase()+' | Europe Time CET';
  document.getElementById('pop').style.display='flex';
 }
 function closePop(){document.getElementById('pop').style.display='none';}
