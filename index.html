@@ -27,12 +27,7 @@ body{background:#000;color:#fff;font-family:Arial}
 <body>
 <div class="ad" onclick="window.open('https://google.com','_blank')">🔥 AD TOP - CLICKABLE - YOUR AD HERE 🔥</div>
 <div class="head"><div><b style="color:#00ff88">⚽ LIVE SCORE</b><br><small style="color:#888">All Leagues - Europe Time CET</small></div><div style="color:#00ff88;font-weight:900">LIVE</div></div>
-<div class="tabs">
-<button class="tab" onclick="loadDate('2026-10-17',this)">YESTERDAY</button>
-<button class="tab active" onclick="loadDate('2026-10-18',this)">TODAY</button>
-<button class="tab" onclick="loadDate('2026-10-19',this)">TOMORROW</button>
-<button class="tab" onclick="loadDate('2026-10-20',this)">OCT 20</button>
-</div>
+<div class="tabs" id="tabs"></div>
 <div class="ad mid" onclick="window.open('https://google.com','_blank')">💰 AD MID - CLICKABLE - YOUR ADSENSE HERE 💰</div>
 <div id="games"><p style="padding:40px;text-align:center;color:#00ff88">Loading all matches... Europe Time...</p></div>
 <div id="pop" onclick="if(event.target==this)closePop()">
@@ -48,23 +43,41 @@ body{background:#000;color:#fff;font-family:Arial}
 </div>
 </div>
 <script>
-var all=[],cur='2026-10-18';
+var all=[];
+function fmt(d){return d.toISOString().split('T')[0];}
+function addDays(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x;}
+let today=new Date();
+let dates=[
+ {label:'YESTERDAY',date:fmt(addDays(today,-1))},
+ {label:'TODAY',date:fmt(today)},
+ {label:'TOMORROW',date:fmt(addDays(today,1))},
+ {label:fmt(addDays(today,2)).slice(5),date:fmt(addDays(today,2))},
+ {label:fmt(addDays(today,3)).slice(5),date:fmt(addDays(today,3))}
+];
+function buildTabs(){
+ let h='';
+ dates.forEach((x,i)=>{
+  let active=i==1?' active':'';
+  h+='<button class="tab'+active+'" onclick="loadDate(\''+x.date+'\',this)">'+x.label+'</button>';
+ });
+ document.getElementById('tabs').innerHTML=h;
+ loadDate(dates[1].date, document.querySelectorAll('.tab')[1]);
+}
 async function loadDate(d,el){
- cur=d;
  if(el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
- document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center;color:#00ff88">Loading...</p>';
+ document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center;color:#00ff88">Loading '+d+'...</p>';
  try{
   let r=await fetch('/matches?date='+d);
   let j=await r.json();
   all=j.data.matches||[];
-  render();
+  render(d);
  }catch(e){
   document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center">Error loading</p>';
  }
 }
-function render(){
+function render(dateStr){
  if(!all.length){
-  document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center">No games for this date</p>';
+  document.getElementById('games').innerHTML='<p style="padding:30px;text-align:center">No games for '+dateStr+'<br><small style="color:#888">API returned 0 matches - check FOOTBALL_API_KEY in Cloudflare</small></p>';
   return;
  }
  let html='';let groups={};
@@ -84,11 +97,11 @@ function openPop(id){
  document.getElementById('ptitle').textContent=m.home.name+' vs '+m.away.name+' - '+m.time+' CET';
  document.getElementById('ht').textContent=(m.ht_home!=null)?m.ht_home+' - '+m.ht_away:'0 - 0';
  document.getElementById('ft').textContent=(m.ft_home!=null)?m.ft_home+' - '+m.ft_away:'-';
- document.getElementById('pinfo').textContent=m.league.name+' | Status: '+m.status.toUpperCase()+' | Europe Time CET';
+ document.getElementById('pinfo').textContent=m.league.name+' | Status: '+m.status.toUpperCase()+' | Europe Time CET '+m.time;
  document.getElementById('pop').style.display='flex';
 }
 function closePop(){document.getElementById('pop').style.display='none';}
-loadDate(cur);
+buildTabs();
 </script>
 </body>
 </html>
