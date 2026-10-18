@@ -1,1 +1,25 @@
 
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LiveScore TOP 10</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;color:#fff;font-family:Arial} .top{background:#0f0;color:#000;text-align:center;padding:12px;font-weight:bold} .head{background:#111;display:flex;justify-content:space-between;padding:10px 15px} .head b{color:#0f0} .tabs{display:flex;gap:8px;padding:10px;background:#111;overflow-x:auto} .tab{background:#222;color:#aaa;padding:8px 15px;border-radius:20px;border:none;cursor:pointer;white-space:nowrap} .tab.active{background:#0f0;color:#000;font-weight:bold} .fil{display:flex;gap:8px;padding:10px;background:#000} .fbtn{padding:6px 12px;border-radius:20px;border:1px solid #333;background:#111;color:#fff} .fbtn.active{background:#0f0;color:#000} .admid{border:2px dashed #0f0;margin:10px;padding:15px;text-align:center;color:#0f0;border-radius:10px} .lg{background:#0a0a0a;color:#0f0;padding:8px 12px;display:flex;justify-content:space-between;font-size:13px;font-weight:bold;margin-top:10px} .mt{display:flex;padding:12px;background:#111;border-bottom:1px solid #222;cursor:pointer} .tm{color:#0f0;width:50px;font-weight:bold} .tn{flex:1;padding-left:10px} .sc{width:35px;text-align:center;font-weight:bold} #modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);justify-content:center;align-items:center;z-index:99} .box{background:#111;border:2px solid #0f0;padding:20px;border-radius:15px;width:90%;max-width:350px;text-align:center}</style></head><body>
+<div class="top">AD TOP</div>
+<div class="head"><b>⚽ LiveScore TOP 10</b><span style="font-size:11px">EUROPE TIME CET</span></div>
+<div class="tabs">
+<button class="tab" onclick="go('2026-10-16')">10-16</button>
+<button class="tab" onclick="go('2026-10-17')">Yesterday<br>10-17</button>
+<button class="tab active" onclick="go('2026-10-18')">Today 10-18</button>
+<button class="tab" onclick="go('2026-10-19')">Tomorrow<br>10-19</button>
+</div>
+<div class="fil"><button class="fbtn active">ALL GAMES</button><button class="fbtn">🔴 LIVE</button><button class="fbtn">✅ FINISHED</button><button class="fbtn" onclick="location.reload()">🔄</button></div>
+<div class="admid">AD MID</div>
+<div id="games" style="padding:10px">Loading...</div>
+<div id="modal" onclick="if(event.target==this)this.style.display='none'"><div class="box"><h3 id="t1" style="color:#0f0">KICK-OFF</h3><div style="display:flex;justify-content:space-around;margin:15px 0"><div><b>HALF TIME</b><br><span id="ht">-</span></div><div><b>FULL TIME</b><br><span id="ft">-</span></div></div><p id="ex" style="color:#aaa;font-size:12px"></p><button onclick="document.getElementById('modal').style.display='none'" style="background:#0f0;color:#000;border:none;padding:10px 20px;border-radius:20px;width:100%;margin-top:10px;font-weight:bold">CLOSE</button></div></div>
+<script>
+var all=[];var cur='2026-10-18';
+function go(d){cur=d;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));event.target.classList.add('active');load(d);}
+async function load(d){d=d||cur;document.getElementById('games').innerHTML='Loading...';try{var r=await fetch('/matches?date='+d);var j=await r.json();all=j.data.matches||[];show();}catch(e){document.getElementById('games').innerHTML='Error';}}
+function show(){var h='';var leagues={};all.forEach(m=>{var k=m.league.country+': '+m.league.name;if(!leagues[k])leagues[k]=[];leagues[k].push(m);});for(var l in leagues){h+='<div class="lg"><span>'+l+'</span><span>STANDINGS</span></div>';leagues[l].forEach(m=>{var tm='';if(m.status=='finished')tm='FT';else if(m.status=='live')tm=m.liveMinute||m.time;else tm=m.time;var sc=(m.ft_home!=null)?m.ft_home+' - '+m.ft_away:'-';h+='<div class="mt" onclick="openM(\''+m.id+'\')"><div class="tm">'+tm+'</div><div class="tn">'+m.home.name+' - '+m.away.name+'</div><div class="sc">'+sc+'</div></div>';});}document.getElementById('games').innerHTML=h||'No games';}
+function openM(id){var m=all.find(x=>String(x.id)==String(id));if(!m)return;document.getElementById('t1').textContent='KICK-OFF: '+m.time+' CET';document.getElementById('ht').textContent=(m.ht_home!=null)?m.ht_home+' - '+m.ht_away:'0 - 0';document.getElementById('ft').textContent=(m.ft_home!=null)?m.ft_home+' - '+m.ft_away:'-';document.getElementById('ex').textContent=m.time+' | '+m.status+' | '+m.league.name;document.getElementById('modal').style.display='flex';}
+load(cur);
+</script></body></html>
