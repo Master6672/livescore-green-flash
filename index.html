@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,9 +7,9 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#070e07;color:#fff;font-family:Arial}
 .ad-top{position:sticky;top:0;z-index:200;background:#00c853;color:#000;padding:12px;text-align:center;font-weight:900;display:block;text-decoration:none}
-.ad-mid{background:#0f1f0f;border:1px dashed #00e676;margin:8px;padding:10px;text-align:center;color:#00e676;border-radius:8px;display:block;text-decoration:none;font-weight:700}
+.ad-mid{background:#0f1f0f;border:1px dashed #00e676;margin:8px;padding:12px;text-align:center;color:#00e676;border-radius:8px;display:block;text-decoration:none;font-weight:700}
 header{position:sticky;top:44px;z-index:100;background:#0a130a;border-bottom:2px solid #00c853;padding:8px}
-.logo{font-weight:900;color:#00e676;font-size:18px}
+.logo{font-weight:900;color:#00e676;font-size:18px;padding:4px 0}
 .days{display:flex;gap:6px;overflow:auto;padding:8px 0;min-height:50px}
 .day{min-width:74px;padding:8px 4px;background:#122112;border-radius:10px;text-align:center;cursor:pointer;border:1px solid #1d331d;flex-shrink:0}
 .day.active{background:#00c853;color:#000;font-weight:800}
@@ -54,37 +53,27 @@ let curDate=new Date().toISOString().split('T')[0];
 let filter='all';
 let allMatches=[];
 
-// FIXED TOP 10 - CAF WILL NOT BE TOP 1 AGAIN!
 function getTopRank(m){
  try{
-  let name=(m.league?.name||"").toLowerCase();
-  let country=(m.league?.country||"").toLowerCase();
-  // 1. Europe Champions League ONLY - not CAF, not AFC
-  if(name.includes("champions league") && (country==="europe"||country.includes("europe")||country==="uefa"||country==="world")) return 0;
-  // 2. Europe Europa League ONLY
-  if(name.includes("europa league") && (country==="europe"||country.includes("europe")||country==="uefa")) return 1;
-  // 3. Europe Conference League ONLY
-  if(name.includes("conference league") && (country==="europe"||country.includes("europe")||country==="uefa")) return 2;
-  // 4. England Premier League
+  let name=(m.league?.name||m.leagueName||"").toLowerCase();
+  let country=(m.league?.country||m.country||"").toLowerCase();
+  if(name.includes("champions league")) return 0;
+  if(name.includes("europa league") && !name.includes("conference")) return 1;
+  if(name.includes("conference league")) return 2;
   if(country==="england" && name.includes("premier")) return 3;
-  // 5. France Ligue 1
   if(country==="france" && name.includes("ligue 1")) return 4;
-  // 6. Germany Bundesliga
-  if(country==="germany" && name.includes("bundesliga") && !name.includes("2.")) return 5;
-  // 7. Italy Serie A
+  if(country==="germany" && name.includes("bundesliga")) return 5;
   if(country==="italy" && name.includes("serie a")) return 6;
-  // 8. Spain La Liga
-  if(country==="spain" && name.includes("la liga")) return 7;
-  // 9. Netherlands Eredivisie
+  if(country==="spain" && (name.includes("la liga")||name.includes("laliga"))) return 7;
   if(country==="netherlands" && name.includes("eredivisie")) return 8;
-  // 10. Portugal Primeira Liga
-  if(country==="portugal" && (name.includes("primeira")||name.includes("liga portugal"))) return 9;
+  if(country==="portugal" && name.includes("primeira")) return 9;
   return 99;
  }catch(e){return 99;}
 }
 
 function loadDays(){
  let d=document.getElementById('days');
+ if(!d) return;
  let html='';
  for(let i=-4;i<=4;i++){
   let dt=new Date(); dt.setDate(dt.getDate()+i);
@@ -96,37 +85,34 @@ function loadDays(){
  d.innerHTML=html;
 }
 function pickDate(iso){curDate=iso; loadDays(); loadMatches();}
-function setF(f){filter=f; document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active')); event.target.classList.add('active'); render();}
+function setF(f){
+ filter=f;
+ document.querySelectorAll('.fbtn').forEach(b=>{ if(b.textContent.includes('All')||b.textContent.includes('Live')||b.textContent.includes('Finished')) b.classList.remove('active'); });
+ event.target.classList.add('active');
+ render();
+}
 
 async function loadMatches(){
  let list=document.getElementById('list');
- list.innerHTML='<div style="padding:20px;text-align:center;color:#66bb6a">Loading '+curDate+'...</div>';
+ list.innerHTML='<div style="padding:20px;text-align:center;color:#66bb6a">Loading games for '+curDate+'...</div>';
  try{
   let r=await fetch(`/api/matches?date=${curDate}`);
   let j=await r.json();
   allMatches=j.data?.matches||j.matches||j.data||[];
   if(!Array.isArray(allMatches)) allMatches=[];
  }catch(e){
-  list.innerHTML='<div style="padding:20px;text-align:center">API error<br><button onclick="loadMatches()" style="padding:8px;background:#00c853;border:none;border-radius:8px">Retry</button></div>';
+  list.innerHTML='<div style="padding:20px;text-align:center;color:#ff5252">API error - Check /api/matches?date='+curDate+'<br><button onclick="loadMatches()" style="margin-top:10px;padding:8px 16px;background:#00c853;border:none;border-radius:8px">Retry</button></div>';
   return;
  }
  render();
 }
 
-// FIXED TIME - TRY MANY FIELDS
 function getTimeStr(m){
- let raw = m.time || m.start_time || m.kickoff || m.date || m.fixture?.date || m.timestamp || "";
- // If raw is number (unix timestamp)
- if(typeof raw==="number"){
-  let d=new Date(raw*1000);
-  return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Lagos'});
- }
+ let raw = m.time || m.start_time || m.kickoff || "";
  if(!raw) return "--:--";
  try{
-  // Extract time from ISO like 2025-10-18T14:00:00Z
   let d=new Date(raw);
   if(!isNaN(d.getTime())){
-   // If date is today, show time, if not, show time
    return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Lagos'});
   }
   let mm=String(raw).match(/(\d{1,2}:\d{2})/);
@@ -139,19 +125,19 @@ function render(){
  let sort=document.getElementById('sortSel')?.value||'top';
  let filtered=allMatches.filter(m=>{
   if(filter==='finished' && m.status!=='finished' && m.status!=='FT') return false;
-  if(filter==='live' && !m.isLive) return false;
+  if(filter==='live' && !m.isLive && m.status!=='live') return false;
   return true;
  });
 
  if(filtered.length===0){
-  document.getElementById('list').innerHTML='<div style="padding:30px;text-align:center;color:#81c784">No games for '+curDate+'<br>Try Yesterday</div>';
+  document.getElementById('list').innerHTML='<div style="padding:30px;text-align:center;color:#81c784">No games for '+curDate+'<br><small>Try Yesterday / Today - Tomorrow may have no games yet</small></div>';
   return;
  }
 
  let grouped={};
  filtered.forEach(m=>{
-  let country=m.league?.country||'Other';
-  let lname=m.league?.name||'League';
+  let country=m.league?.country||m.country||'Other';
+  let lname=m.league?.name||m.leagueName||'League';
   let k=`${country}::${lname}`;
   if(!grouped[k]) grouped[k]=[];
   grouped[k].push(m);
@@ -171,24 +157,22 @@ function render(){
   let ms=grouped[k];
   let rank=getTopRank(ms[0]);
   let badge = rank<10 ? `<span style="background:#00c853;color:#000;padding:1px 6px;border-radius:8px;font-size:10px;margin-left:5px">TOP ${rank+1}</span>` : '';
-  let isTopStyle = rank<10 ? 'background:#123212;border-left-color:#00e676' : '';
-  html+=`<div class="leagueHead" style="${isTopStyle}"><span>${country} - ${league}${badge} (${ms.length})</span></div>`;
+  html+=`<div class="leagueHead"><span>${country} - ${league}${badge} (${ms.length})</span></div>`;
   ms.forEach(m=>{
    let idx=allMatches.indexOf(m);
    let time=getTimeStr(m);
-   let isFin=(m.status==='finished'||m.status==='FT'||m.status==='finished');
+   let isFin=(m.status==='finished'||m.status==='FT');
    let scoreText="-";
    if(isFin){
-    let hs=m.home?.score ?? m.home_score ?? '?';
-    let as=m.away?.score ?? m.away_score ?? '?';
+    let hs=m.home?.score ?? m.home_score ?? m.score_home ?? '?';
+    let as=m.away?.score ?? m.away_score ?? m.score_away ?? '?';
     scoreText=`${hs} - ${as}`;
    } else if(m.isLive){
     let hs=m.home?.score ?? 0;
     let as=m.away?.score ?? 0;
     scoreText=`${hs} - ${as}`;
    }
-   // LEFT = TIME, RIGHT = FT ONLY (no HT)
-   html+=`<div class="match" onclick="openMatch(${idx})"><div class="timeCol">${time}</div><div class="teamCol"><div>${m.home?.name||'Home'}</div><div>${m.away?.name||'Away'}</div></div><div class="scoreCol" style="color:${isFin?'#00e676':m.isLive?'#ff1744':'#666'}">${scoreText}</div></div>`;
+   html+=`<div class="match" onclick="openMatch(${idx})"><div class="timeCol">${time}</div><div class="teamCol"><div>${m.home?.name||m.homeName||'Home'}</div><div>${m.away?.name||m.awayName||'Away'}</div></div><div class="scoreCol">${scoreText}</div></div>`;
   });
  });
  document.getElementById('list').innerHTML=html;
@@ -196,18 +180,19 @@ function render(){
 
 function openMatch(idx){
  let m=allMatches[idx];
+ if(!m) return;
  let ft = (m.status==='finished'||m.status==='FT') ? `${m.home?.score ?? '?'} - ${m.away?.score ?? '?'}` : 'Not started';
- let ht = (m.ht && m.ht.home!=null) ? `${m.ht.home} - ${m.ht.away}` : 'No HT data';
+ let ht = (m.ht && m.ht.home!=null) ? `${m.ht.home} - ${m.ht.away}` : 'No HT yet';
  let htft = (m.ht && (m.status==='finished'||m.status==='FT')) ? `${m.ht.home}-${m.ht.away} / ${m.home?.score}-${m.away?.score}` : '-';
  let time=getTimeStr(m);
  document.getElementById('modalBox').innerHTML=`
-  <div style="padding:10px;background:#162616;text-align:center;font-weight:800;border-bottom:2px solid #00c853">RESULTS - FT + HT</div>
+  <div style="padding:10px;background:#162616;text-align:center;font-weight:800;border-bottom:2px solid #00c853">RESULTS - FT & HT</div>
   <div class="content">
    <h3 style="text-align:center">${m.home?.name||'Home'} vs ${m.away?.name||'Away'}</h3>
    <p style="text-align:center;color:#81c784;font-size:12px">${m.league?.country||''} - ${m.league?.name||''}<br>${time} • ${m.status||''}</p>
    <div style="background:#081208;padding:12px;border-radius:10px;margin-top:10px">
-    <div style="display:flex;justify-content:space-between;padding:10px 0"><span>FT Result:</span><b style="color:#00e676;font-size:20px">${ft}</b></div>
-    <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #1a331a"><span>HT Result:</span><b style="color:#ff9800;font-size:20px">${ht}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0"><span>FT:</span><b style="color:#00e676;font-size:20px">${ft}</b></div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #1a331a"><span>HT:</span><b style="color:#ff9800;font-size:20px">${ht}</b></div>
     <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #1a331a"><span>HT/FT:</span><b>${htft}</b></div>
    </div>
   </div>`;
