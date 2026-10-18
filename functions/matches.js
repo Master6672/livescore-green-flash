@@ -1,65 +1,61 @@
 export async function onRequestGet(context) {
+  const url = new URL(context.request.url);
+  const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const key = context.env.LIVE_FOOTBALL_API_KEY || context.env.FOOTBALL_API_KEY || "";
+
+  if (!key) {
+    return new Response(JSON.stringify({ data: { matches: [] }, error: "NO_KEY" }), {
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+    });
+  }
+
   try {
-    const url = new URL(context.request.url);
-    const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
-    
-    // Support BOTH names - LIVE_FOOTBALL_API_KEY or FOOTBALL_API_KEY
-    const key = context.env.LIVE_FOOTBALL_API_KEY || context.env.FOOTBALL_API_KEY || "";
-
-    if (!key) {
-      return new Response(JSON.stringify({ data: { matches: [] }, error: "NO_KEY_FOUND" }), {
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-      });
-    }
-
     const apiRes = await fetch(`https://live-football-api.com/api/v1/matches?date=${date}`, {
       headers: { "X-API-Key": key.trim() }
     });
+    const json = await apiRes.json();
+    const list = json.data?.matches || json.data || json.matches || [];
 
-    const text = await apiRes.text();
-    let json; try{ json=JSON.parse(text); }catch{ json={data:[]}; }
-
-    const list = json.data?.matches || json.data || [];
-
-    function europeTime(ts, iso){
+    function getTime(m){
       try{
+        let iso = m.fixture?.date || m.date || "";
+        let ts = m.fixture?.timestamp || m.timestamp || 0;
         let d = ts ? new Date(Number(ts)*1000) : new Date(iso);
-        if(isNaN(d.getTime()) && iso?.includes("T")) return iso.split("T")[1].slice(0,5);
-        return new Intl.DateTimeFormat("en-GB",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"Europe/Berlin"}).format(d);
-      }catch{ return "-"; }
+        if(isNaN(d.getTime())) return "15:00";
+        // Lagos time = your Nigeria time
+        return new Intl.DateTimeFormat("en-GB",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"Africa/Lagos"}).format(d);
+      }catch{ return "15:00"; }
     }
 
     let out = list.map(m=>{
-      const ts = m.fixture?.timestamp || m.timestamp || 0;
-      const iso = m.fixture?.date || m.date || "";
-      const short = (m.fixture?.status?.short || "").toUpperCase();
+      const short = String(m.fixture?.status?.short || m.status?.short || "").toUpperCase();
       const el = m.fixture?.status?.elapsed || 0;
       let status="notstarted", live="";
-      if(["1H","2H","HT","LIVE"].includes(short) || el){ status="live"; live= el? el+"'" : "LIVE"; }
-      else if(["FT","AET","PEN"].includes(short)) status="finished";
-      let fh=m.goals?.home ?? m.score?.fulltime?.home ?? null;
-      let fa=m.goals?.away ?? m.score?.fulltime?.away ?? null;
-      if(status==="notstarted"){ fh=null; fa=null; }
+      if(["1H","2H","HT","LIVE"].includes(short) || el>0){ status="live"; live=el?el+"'":"LIVE"; }
+      else if(["FT","AET","PEN","FT_PEN","AWD"].includes(short)) status="finished";
+      
+      let fh = m.goals?.home ?? m.score?.fulltime?.home ?? null;
+      let fa = m.goals?.away ?? m.score?.fulltime?.away ?? null;
+
       return{
-        id:m.id,
-        time:europeTime(ts,iso),
-        date:date,
-        status, liveMinute:live,
-        home:{name:m.home?.name || m.teams?.home?.name || "Home"},
-        away:{name:m.away?.name || m.teams?.away?.name || "Away"},
-        ht_home:m.score?.halftime?.home ?? null,
-        ht_away:m.score?.halftime?.away ?? null,
-        ft_home:fh, ft_away:fa,
-        league:{name:m.league?.name || "League", country:m.league?.country || m.country?.name || "World"}
+        id: m.fixture?.id || m.id,
+        time: getTime(m),
+        date: date,
+        status, liveMinute: live,
+        home:{name: m.teams?.home?.name || m.home?.name || "Home"},
+        away:{name: m.teams?.away?.name || m.away?.name || "Away"},
+        ft_home: fh, ft_away: fa,
+        ht_home: m.score?.halftime?.home ?? null,
+        ht_away: m.score?.halftime?.away ?? null,
+        league:{name: m.league?.name || "League", country: m.league?.country || "World"}
       };
     });
 
-    out.sort((a,b)=>(a.league.country+a.league.name).localeCompare(b.league.country+b.league.name));
+    out.sort((a,b)=> (a.time||"").localeCompare(b.time||""));
 
     return new Response(JSON.stringify({ data: { matches: out } }), {
       headers: { "Content-Type": "application/json", "Cache-Control":"no-store", "Access-Control-Allow-Origin":"*" }
     });
-
   }catch(e){
     return new Response(JSON.stringify({ data:{matches:[]}, error:e.message }), {
       headers:{ "Content-Type":"application/json", "Access-Control-Allow-Origin":"*" }
