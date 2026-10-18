@@ -1,82 +1,72 @@
-
 export async function onRequestGet(context) {
   try {
     const url = new URL(context.request.url);
     const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
     const key = context.env.FOOTBALL_API_KEY;
     if (!key) return new Response(JSON.stringify({data:{matches:[]}}), {headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
-    
+
     let res = await fetch('https://live-football-api.com/api/v1/matches?date='+date, {headers:{'X-API-Key':key.trim()}});
     let json = await res.json();
-    let list = json.data?.matches || json.data || [];
+    let list = json.data?.matches || json.data || json || [];
 
-    // EUROPE TIME CONVERTER - Like Flashscore CET/CEST
-    function toEuropeTime(ts, iso){
+    function europeTime(ts, iso){
       try{
-        if(ts){
-          const d=new Date(ts*1000);
-          // Europe/Paris = CET/CEST same as Flashscore
-          return new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Paris'}).format(d);
-        }
-        if(iso){
-          const d=new Date(iso);
-          return new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Paris'}).format(d);
-        }
-      }catch(e){}
-      return '-';
+        const d = ts ? new Date(ts*1000) : new Date(iso);
+        return new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Berlin'}).format(d);
+      }catch{return '-';}
     }
-
     function getPriority(name){
       const n=(name||'').toLowerCase();
-      if(n.includes('champions league') && !n.includes('qualification')) return 1;
+      if(n.includes('champions league')) return 1;
       if(n.includes('europa league') && !n.includes('conference')) return 2;
       if(n.includes('conference league') || n.includes('europa conference')) return 3;
-      if(n.includes('premier league') || n.includes('epl') ) return 4;
-      if(n.includes('ligue 1') || n.includes('france ligue')) return 5;
+      if(n.includes('premier league')) return 4;
+      if(n.includes('ligue 1')) return 5;
       if(n.includes('bundesliga')) return 6;
       if(n.includes('serie a') || n.includes('series a')) return 7;
-      if(n.includes('la liga') || n.includes('laliga') || n.includes('primera division')) return 8;
+      if(n.includes('la liga') || n.includes('laliga')) return 8;
       if(n.includes('eredivisie')) return 9;
       if(n.includes('primeira liga') || n.includes('liga portugal')) return 10;
-      return 99; // other leagues go down
+      return 99;
     }
 
     let out=[];
     for(let m of list){
-      const lname=m.league?.name||'';
+      const lname=m.league?.name||'Unknown League';
       const prio=getPriority(lname);
-      // ONLY TOP 10 LEAGUES - NO OTHER LEAGUE FIRST
-      if(prio>10) continue; 
-
       const ts=m.fixture?.timestamp||0;
       const iso=m.fixture?.date||'';
-      const time=toEuropeTime(ts, iso);
+      
+      // CORRECT EUROPE TIME LIKE FLASHSCORE
+      const time = europeTime(ts, iso);
 
-      let fh=m.goals?.home ?? m.score?.fulltime?.home ?? m.home?.score ?? null;
-      let fa=m.goals?.away ?? m.score?.fulltime?.away ?? m.away?.score ?? null;
-      let hh=m.score?.halftime?.home ?? m.home?.halftime ?? null;
-      let ha=m.score?.halftime?.away ?? m.away?.halftime ?? null;
+      let fh = m.goals?.home ?? m.score?.fulltime?.home ?? m.home?.score ?? null;
+      let fa = m.goals?.away ?? m.score?.fulltime?.away ?? m.away?.score ?? null;
+      let hh = m.score?.halftime?.home ?? m.home?.halftime ?? null;
+      let ha = m.score?.halftime?.away ?? m.away?.halftime ?? null;
 
       const short=(m.fixture?.status?.short||'').toUpperCase();
-      const elapsed=m.fixture?.status?.elapsed||0;
+      const el=m.fixture?.status?.elapsed||0;
       let status='notstarted'; let live='';
-      if(['1H','2H','HT','LIVE'].includes(short) || elapsed){status='live'; live=elapsed?elapsed+"'":'LIVE';}
-      else if(['FT','AET','PEN','FT_PEN'].includes(short) || (fh!=null && date<=new Date().toISOString().split('T')[0])){status='finished';}
-      
-      if(status=='notstarted'){fh=null;fa=null;hh=null;ha=null;}
+      if(['1H','2H','HT','LIVE'].includes(short) || el){status='live'; live=el?el+"'":'LIVE';}
+      else if(['FT','AET','PEN'].includes(short)){status='finished';}
+
+      if(status=='notstarted'){fh=null;fa=null;}
 
       out.push({
-        id:m.id, time:time, ts:ts, priority:prio,
-        liveMinute:live, status:status,
+        id:m.id||Math.random(),
+        time:time, ts:ts||0, priority:prio,
+        status:status, liveMinute:live,
         home:{name:m.home?.name||'Home'}, away:{name:m.away?.name||'Away'},
         ht_home:hh, ht_away:ha, ft_home:fh, ft_away:fa,
-        league:{country:m.league?.country||'Europe', name:lname, priority:prio}
+        league:{name:lname, country:m.league?.country||'', priority:prio}
       });
     }
 
-    // SORT BY MY TOP 10 ORDER FIRST, THEN BY TIME
+    // TOP 10 FIRST, OTHER LEAGUES A-Z
     out.sort((a,b)=>{
       if(a.priority!==b.priority) return a.priority-b.priority;
+      if(a.priority===99) return a.league.name.localeCompare(b.league.name);
       return a.ts-b.ts;
     });
 
