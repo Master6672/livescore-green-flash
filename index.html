@@ -3,123 +3,145 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Livescore</title>
+<title>LiveScore HT-FT</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a0a;color:#fff;font-family:Arial,sans-serif}
-.header{padding:16px;font-size:18px;font-weight:900;background:#111}
-.date-tabs{display:flex;gap:8px;padding:12px 10px;overflow-x:auto;background:#111;border-bottom:1px solid #222}
-.date-tab{background:#222;color:#888;border:0;padding:10px 20px;border-radius:99px;font-weight:700;white-space:nowrap;cursor:pointer}
-.date-tab.active{background:#00c853;color:#000;font-weight:900}
-.filters{display:flex;gap:8px;padding:12px 10px;overflow-x:auto;background:#111;border-bottom:1px solid #222}
-.filter{background:#222;color:#888;border:0;padding:8px 18px;border-radius:99px;font-weight:700;cursor:pointer}
+body{background:#0f1a14;color:#fff;font-family:Arial,sans-serif}
+.ad-top{background:#00c853;color:#000;text-align:center;padding:12px;font-weight:900;cursor:pointer;font-size:14px}
+.header{background:#0a1510;padding:12px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1a2e22}
+.header-left{font-weight:900;font-size:16px;color:#00ff88}
+.header-right{font-size:9px;color:#00c853;font-weight:700;text-align:right;line-height:1.2}
+.date-tabs{display:flex;gap:6px;padding:10px;background:#0a1510;overflow-x:auto}
+.date-tab{background:#1a2e22;color:#888;border:0;padding:8px 14px;border-radius:12px;font-weight:700;text-align:center;line-height:1.1;min-width:75px;cursor:pointer}
+.date-tab b{display:block;font-size:13px}
+.date-tab small{font-size:11px}
+.date-tab.active{background:#00c853;color:#000}
+.filters{display:flex;gap:6px;padding:10px;background:#0a1510;overflow-x:auto;border-bottom:1px solid #1a2e22}
+.filter{background:#1a2e22;color:#888;border:0;padding:8px 14px;border-radius:99px;font-weight:700;font-size:12px;white-space:nowrap;cursor:pointer}
 .filter.active{background:#fff;color:#000}
-.search{margin:12px 10px;background:#1e1e1e;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
-.search input{background:transparent;border:0;color:#fff;width:100%;outline:none;font-size:15px}
-.league{background:#1e2a23;display:flex;justify-content:space-between;padding:10px 12px;color:#00c853;font-weight:900;font-size:13px;text-transform:uppercase;margin-top:2px}
-.league span{color:#00c853;text-decoration:underline;font-weight:400;text-transform:none;font-size:12px;cursor:pointer}
-.match{display:flex;align-items:center;padding:12px 12px;background:#0a0a0a;border-bottom:1px solid #1a1a1a;cursor:pointer}
-.match .time{width:55px;color:#888;font-size:14px;font-weight:700}
-.match .teams{flex:1;font-size:15px;line-height:1.4}
-.match .score{width:30px;text-align:right;color:#888;font-weight:900}
+.ad-mid{margin:10px;border:2px dashed #00c853;color:#00c853;text-align:center;padding:14px;border-radius:12px;font-weight:900;cursor:pointer}
+.league{background:#1e3326;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font-weight:700;font-size:13px;border-bottom:1px solid #0f1a14}
+.league .top-badge{background:#00c853;color:#000;padding:2px 8px;border-radius:99px;font-size:10px;margin-left:6px}
+.match{display:flex;align-items:center;padding:12px;background:#0f1a14;border-bottom:1px solid #1a2e22;cursor:pointer}
+.match .time{width:65px;color:#8fbc8f;font-weight:700;font-size:14px}
+.match .teams{flex:1;font-size:14px;line-height:1.4}
+.match .score{width:50px;text-align:right;color:#00ff88;font-weight:900;font-size:14px}
 </style>
 </head>
 <body>
-<div class="header" id="headerDate">France 2026-10-17</div>
+
+<div class="ad-top" onclick="window.open('https://google.com','_blank')">AD ON TOP - CLICK</div>
+
+<div class="header">
+<div class="header-left">⚽ LiveScore HT-FT</div>
+<div class="header-right">TOP 1-10 FIRST, THEN A-Z</div>
+</div>
 
 <div class="date-tabs" id="dateTabs"></div>
 
-<div class="filters" id="filterTabs">
+<div class="filters">
 <button class="filter active" onclick="setFilter('all',this)">All</button>
 <button class="filter" onclick="setFilter('live',this)">Live</button>
 <button class="filter" onclick="setFilter('finished',this)">Finished</button>
-<button class="filter" onclick="setFilter('scheduled',this)">Scheduled</button>
 <button class="filter" onclick="location.reload()">↻</button>
+<button class="filter" onclick="setSortTop()">Top 1-10 + A-Z</button>
 </div>
 
-<div class="search"><span>🔍</span><input id="searchBox" placeholder="Search..." oninput="doSearch()"></div>
+<div class="ad-mid" onclick="window.open('https://google.com','_blank')">AD MID - CLICK</div>
 
-<div id="games"></div>
+<div id="games"><p style="padding:40px;text-align:center;color:#00c853">Loading HT-FT...</p></div>
 
 <script>
 let ALL=[];
 let FILTER='all';
-let SEARCH='';
+let SORT_TOP=true;
 
 function fmt(d){return d.toISOString().split('T')[0];}
+function fmtMD(d){return (d.getMonth()+1)+'-'+d.getDate();}
+function fmtDay(d){return d.toLocaleDateString('en-US',{weekday:'short'});}
 function add(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x;}
+
 let TODAY=new Date();
 let DATES=[
-{label:'10-15', date:fmt(add(TODAY,-2))},
-{label:'Yesterday', date:fmt(add(TODAY,-1))},
-{label:'Today', date:fmt(TODAY)},
-{label:'Tomorrow', date:fmt(add(TODAY,1))},
-{label:fmt(add(TODAY,2)), date:fmt(add(TODAY,2))}
+{day:fmtDay(add(TODAY,-2)), md:fmtMD(add(TODAY,-2)), date:fmt(add(TODAY,-2)), label:'Fri'},
+{day:'Yesterday', md:fmtMD(add(TODAY,-1)), date:fmt(add(TODAY,-1)), label:'Yesterday'},
+{day:'Today', md:fmtMD(TODAY), date:fmt(TODAY), label:'Today'},
+{day:'Tomorro', md:fmtMD(add(TODAY,1)), date:fmt(add(TODAY,1)), label:'Tomorro'}
 ];
+DATES[0].day=fmtDay(add(TODAY,-2));
 
-function buildDateTabs(){
+function buildTabs(){
 let h='';
 DATES.forEach((d,i)=>{
-h+=`<button class="date-tab ${d.label==='Today'?'active':''}" onclick="loadDate('${d.date}',this)">${d.label}</button>`;
+let isActive = d.label==='Yesterday';
+h+=`<button class="date-tab ${isActive?'active':''}" onclick="loadDate('${d.date}',this)"><b>${d.label==='Yesterday'||d.label==='Today'||d.label==='Tomorro'?d.label:d.day}</b><small>${d.md}</small></button>`;
 });
 document.getElementById('dateTabs').innerHTML=h;
-loadDate(fmt(TODAY),null);
+loadDate(fmt(add(TODAY,-1)), null);
 }
 
 async function loadDate(dateStr,el){
 if(el){document.querySelectorAll('.date-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
-document.getElementById('headerDate').textContent='France '+dateStr;
-document.getElementById('games').innerHTML=`<p style="padding:40px;text-align:center;color:#555">Loading ${dateStr}...</p>`;
+document.getElementById('games').innerHTML=`<p style="padding:30px;text-align:center;color:#00c853">Loading ${dateStr}...</p>`;
 try{
 let r=await fetch('/matches?date='+dateStr+'&t='+Date.now());
 let j=await r.json();
 ALL=j.data?.matches||[];
 render();
-}catch(e){document.getElementById('games').innerHTML=`<p style="padding:30px;text-align:center;color:#666">No games</p>`;}
+}catch{ document.getElementById('games').innerHTML=`<p style="padding:30px;text-align:center;color:#555">No games</p>`; }
 }
 
 function setFilter(f,el){
 FILTER=f;
-document.querySelectorAll('.filter').forEach(b=>b.classList.remove('active'));
+document.querySelectorAll('.filters .filter').forEach(b=>{if(b.textContent!=='Top 1-10 + A-Z' && b.textContent!=='↻')b.classList.remove('active')});
 if(el)el.classList.add('active');
 render();
 }
-function doSearch(){
-SEARCH=document.getElementById('searchBox').value.toLowerCase();
-render();
-}
+function setSortTop(){SORT_TOP=!SORT_TOP;render();}
 
 function render(){
 let list=ALL.filter(m=>{
 if(FILTER==='live' && m.status!=='live')return false;
 if(FILTER==='finished' && m.status!=='finished')return false;
-if(FILTER==='scheduled' && m.status!=='notstarted')return false;
-if(SEARCH && !(m.home.name.toLowerCase().includes(SEARCH) || m.away.name.toLowerCase().includes(SEARCH) || m.league.name.toLowerCase().includes(SEARCH)))return false;
 return true;
 });
 
-if(!list.length){document.getElementById('games').innerHTML=`<p style="padding:40px;text-align:center;color:#555">No matches</p>`;return;}
+if(SORT_TOP){
+list.sort((a,b)=>{
+let topOrder={'England':1,'Spain':2,'Germany':3,'Italy':4,'France':5};
+let aTop=topOrder[a.league.country]||99;
+let bTop=topOrder[b.league.country]||99;
+if(aTop!==bTop)return aTop-bTop;
+return a.league.name.localeCompare(b.league.name);
+});
+}else{
+list.sort((a,b)=>a.league.name.localeCompare(b.league.name));
+}
 
 let groups={};
 list.forEach(m=>{
-let key=(m.league.country||'World').toUpperCase()+': '+m.league.name.toUpperCase();
-if(!groups[key])groups[key]=[];
-groups[key].push(m);
+let key=m.league.country+' - '+m.league.name;
+if(!groups[key])groups[key]={country:m.league.country,name:m.league.name,count:0,list:[]};
+groups[key].list.push(m);
+groups[key].count++;
 });
 
 let html='';
-Object.keys(groups).sort().forEach(k=>{
-html+=`<div class="league"><div>${k}</div><span>Standings</span></div>`;
-groups[k].forEach(m=>{
+Object.keys(groups).forEach(k=>{
+let g=groups[k];
+let isTop=['England','Spain','France','Germany','Italy'].includes(g.country);
+let badge=isTop?`<span class="top-badge">TOP ${g.country==='England'?'4':g.country==='France'?'5':'3'}</span>`:'';
+html+=`<div class="league"><div>${k} ${badge} (${g.count})</div><div>></div></div>`;
+g.list.forEach(m=>{
 let score=m.ft_home!=null?`${m.ft_home} - ${m.ft_away}`:'-';
-if(m.status==='live')score=`<span style="color:#ff3b3b">${m.liveMinute||'LIVE'}</span>`;
+if(m.status==='live' && m.ft_home!=null) score=`<span style="color:#ff4444">${m.ft_home} - ${m.ft_away} ${m.liveMinute||''}</span>`;
 html+=`<div class="match"><div class="time">${m.time}</div><div class="teams">${m.home.name}<br>${m.away.name}</div><div class="score">${score}</div></div>`;
 });
 });
-document.getElementById('games').innerHTML=html;
+document.getElementById('games').innerHTML=html||`<p style="padding:40px;text-align:center;color:#555">No matches</p>`;
 }
 
-buildDateTabs();
+buildTabs();
 </script>
 </body>
 </html>
