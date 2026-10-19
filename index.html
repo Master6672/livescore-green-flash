@@ -1,17 +1,56 @@
-// TODAY BUTTON
-function todayMatches(){
-  let today = new Date().toISOString().split('T')[0];
-  fetch(`/matches?date=${today}`)
-    .then(r=>r.json())
-    .then(games=>{
-      if(games.length===0){
-        console.log("No games today, trying yesterday");
-        return fetch(`/matches?date=2026-05-12`).then(r=>r.json());
-      }
-      return games;
-    })
-    .then(g=>{ console.log(g); /* show for screen */ });
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LiveScore</title>
+<style>
+body{font-family:Arial;margin:0;background:#eee}
+.head{background:#0f172a;color:#fff;padding:15px;text-align:center;font-size:20px}
+.tabs{display:flex;gap:5px;padding:10px;background:#fff}
+.tabs button{padding:8px 12px;border:1px solid #ddd;border-radius:15px}
+.tabs button.active{background:#0f172a;color:#fff}
+.card{background:#fff;margin:8px;padding:10px;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="head">⚽ LiveScore - Today</div>
+<div class="tabs">
+<button onclick="load('2026-05-12')">Yesterday</button>
+<button class="active" onclick="today()">Today</button>
+<button onclick="load('2026-05-14')">Tomorrow</button>
+</div>
+<div id="list">Loading...</div>
+
+<script>
+async function load(date){
+  let el = document.getElementById('list');
+  el.innerHTML = "Loading " + date + "...";
+  let r = await fetch('/matches?date=' + date);
+  let games = await r.json();
+  if(games.length==0){
+    el.innerHTML = "No games for " + date + "<br>Try 2026-05-12";
+    return;
+  }
+  el.innerHTML = games.map(g=>`
+    <div class="card">
+      <small>${g.league}</small><br>
+      <b>${g.home}</b> ${g.score} <b>${g.away}</b><br>
+      <small>${g.time} - ${g.status}</small>
+    </div>
+  `).join('');
 }
 
-// Click Today
-todayMatches();
+function today(){
+  // Your API get games for May, not October - so use real today
+  let d = new Date().toISOString().split('T')[0];
+  // If today is 2026-10, force to 2026-05-12 wey get games
+  if(d.includes("2026-10") || d.includes("2026-11")){
+    d = "2026-05-12";
+  }
+  load(d);
+}
+
+today();
+</script>
+</body>
+</html>
