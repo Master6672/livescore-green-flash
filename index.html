@@ -1,80 +1,60 @@
-
 <!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LiveScore - Live Football</title>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LiveScore</title>
 <style>
 body{font-family:Arial;margin:0;background:#f5f5f5}
-.header{background:#0f172a;color:white;padding:16px;text-align:center;font-size:20px;font-weight:bold}
-.tabs{display:flex;gap:8px;padding:10px;background:white;overflow:auto}
-.tabs button{padding:8px 14px;border:1px solid #ddd;border-radius:20px;background:white;cursor:pointer;white-space:nowrap}
+.header{background:#0f172a;color:white;padding:16px;text-align:center;font-weight:bold;font-size:20px}
+.tabs{display:flex;gap:8px;padding:10px;background:white;position:sticky;top:0}
+.tabs button{padding:8px 14px;border:1px solid #ddd;border-radius:20px;background:white;cursor:pointer}
 .tabs button.active{background:#0f172a;color:white}
-.match-card{background:white;margin:8px;border-radius:10px;padding:0;overflow:hidden}
-.match-row{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid #f0f0f0}
-.league{font-size:12px;color:#666;margin-bottom:4px}
-.score{font-weight:bold;text-align:center;min-width:80px}
-.score.live{color:#e11d48}
-.time{font-size:11px;color:#999}
-</style>
-</head>
-<body>
+.card{background:white;margin:8px;border-radius:10px;padding:12px}
+.row{display:flex;justify-content:space-between;align-items:center}
+.score{font-weight:bold;min-width:80px;text-align:center}
+small{color:#888}
+</style></head><body>
 <div class="header">⚽ LiveScore</div>
 <div class="tabs">
-<button onclick="loadDate('yesterday',this)">Yesterday</button>
-<button class="active" onclick="loadDate('today',this)">Today</button>
-<button onclick="loadDate('tomorrow',this)">Tomorrow</button>
-<button onclick="loadDate('live',this)">🔴 Live</button>
+<button onclick="load('yesterday',this)">Yesterday</button>
+<button class="active" onclick="load('today',this)">Today</button>
+<button onclick="load('tomorrow',this)">Tomorrow</button>
+<button onclick="load('live',this)">🔴 Live</button>
 </div>
-<div id="matches-list"></div>
-
+<div id="list"></div>
 <script>
-function getDateStr(type){
-  const d = new Date();
-  if(type==='yesterday') d.setDate(d.getDate()-1);
-  if(type==='tomorrow') d.setDate(d.getDate()+1);
+function getDateStr(t){
+  const d=new Date();
+  if(t==='yesterday') d.setDate(d.getDate()-1);
+  if(t==='tomorrow') d.setDate(d.getDate()+1);
   return d.toISOString().split('T')[0];
 }
-
-async function loadDate(type, btn){
+async function load(type,btn){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  
-  let dateStr = getDateStr(type);
-  if(type==='live') dateStr = getDateStr('today');
-  
-  await fetchMatches(dateStr);
+  const date=getDateStr(type);
+  fetchMatches(date);
 }
-
-async function fetchMatches(dateStr) {
-  const list = document.getElementById('matches-list');
-  list.innerHTML = '<div style="text-align:center;padding:40px;">Loading... ⚽</div>';
-  try {
-    const res = await fetch(`/matches?date=${dateStr}`);
-    const matches = await res.json();
-    if (!matches || matches.length === 0) {
-      list.innerHTML = '<div style="text-align:center;padding:40px;">No matches found for '+dateStr+'</div>';
+async function fetchMatches(dateStr){
+  const el=document.getElementById('list');
+  el.innerHTML='<div style="text-align:center;padding:40px">Loading '+dateStr+'... ⚽</div>';
+  try{
+    const res=await fetch(`/matches?date=${dateStr}`);
+    const data=await res.json();
+    if(!data || data.length===0){
+      el.innerHTML=`<div style="text-align:center;padding:40px">No matches found for ${dateStr}<br><br><small>Try Yesterday - your API has no games for this date. API uses real calendar (2026-05), not 2026-10.</small><br><br><a href="/matches?date=2026-05-12" target="_blank">Test 2026-05-12 (should have games)</a></div>`;
       return;
     }
-    list.innerHTML = matches.map(m => `
-      <div class="match-card">
-        <div style="padding:10px 14px 0 14px;"><div class="league">${m.league}</div></div>
-        <div class="match-row">
-          <div style="flex:1"><b>${m.home}</b></div>
-          <div class="score ${m.status==='LIVE' || m.status==='live' ? 'live' : ''}">
-            ${m.score}<div class="time">${m.time} • ${m.status}</div>
-          </div>
-          <div style="flex:1;text-align:right"><b>${m.away}</b></div>
+    el.innerHTML=data.map(m=>`
+      <div class="card">
+        <small>${m.league}</small>
+        <div class="row">
+          <div><b>${m.home}</b></div>
+          <div class="score">${m.score}<br><small>${m.time} • ${m.status}</small></div>
+          <div style="text-align:right"><b>${m.away}</b></div>
         </div>
-      </div>
-    `).join('');
-  } catch(e) {
-    list.innerHTML = '<div style="text-align:center;color:red;padding:30px;">Failed to load. Check API Key.</div>';
+      </div>`).join('');
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;padding:40px">Network error - refresh page</div>';
   }
 }
-
-// Load today on start
 fetchMatches(getDateStr('today'));
-</script>
-</body>
-</html>
+</script></body></html>
