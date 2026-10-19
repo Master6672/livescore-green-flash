@@ -1,1 +1,80 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LiveScore - Live Football</title>
+<style>
+body{font-family:Arial;margin:0;background:#f5f5f5}
+.header{background:#0f172a;color:white;padding:16px;text-align:center;font-size:20px;font-weight:bold}
+.tabs{display:flex;gap:8px;padding:10px;background:white;overflow:auto}
+.tabs button{padding:8px 14px;border:1px solid #ddd;border-radius:20px;background:white;cursor:pointer;white-space:nowrap}
+.tabs button.active{background:#0f172a;color:white}
+.match-card{background:white;margin:8px;border-radius:10px;padding:0;overflow:hidden}
+.match-row{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid #f0f0f0}
+.league{font-size:12px;color:#666;margin-bottom:4px}
+.score{font-weight:bold;text-align:center;min-width:80px}
+.score.live{color:#e11d48}
+.time{font-size:11px;color:#999}
+</style>
+</head>
+<body>
+<div class="header">⚽ LiveScore</div>
+<div class="tabs">
+<button onclick="loadDate('yesterday',this)">Yesterday</button>
+<button class="active" onclick="loadDate('today',this)">Today</button>
+<button onclick="loadDate('tomorrow',this)">Tomorrow</button>
+<button onclick="loadDate('live',this)">🔴 Live</button>
+</div>
+<div id="matches-list"></div>
+
+<script>
+function getDateStr(type){
+  const d = new Date();
+  if(type==='yesterday') d.setDate(d.getDate()-1);
+  if(type==='tomorrow') d.setDate(d.getDate()+1);
+  return d.toISOString().split('T')[0];
+}
+
+async function loadDate(type, btn){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  
+  let dateStr = getDateStr(type);
+  if(type==='live') dateStr = getDateStr('today');
+  
+  await fetchMatches(dateStr);
+}
+
+async function fetchMatches(dateStr) {
+  const list = document.getElementById('matches-list');
+  list.innerHTML = '<div style="text-align:center;padding:40px;">Loading... ⚽</div>';
+  try {
+    const res = await fetch(`/matches?date=${dateStr}`);
+    const matches = await res.json();
+    if (!matches || matches.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:40px;">No matches found for '+dateStr+'</div>';
+      return;
+    }
+    list.innerHTML = matches.map(m => `
+      <div class="match-card">
+        <div style="padding:10px 14px 0 14px;"><div class="league">${m.league}</div></div>
+        <div class="match-row">
+          <div style="flex:1"><b>${m.home}</b></div>
+          <div class="score ${m.status==='LIVE' || m.status==='live' ? 'live' : ''}">
+            ${m.score}<div class="time">${m.time} • ${m.status}</div>
+          </div>
+          <div style="flex:1;text-align:right"><b>${m.away}</b></div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;color:red;padding:30px;">Failed to load. Check API Key.</div>';
+  }
+}
+
+// Load today on start
+fetchMatches(getDateStr('today'));
+</script>
+</body>
+</html>
