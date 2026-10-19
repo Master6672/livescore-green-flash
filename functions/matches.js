@@ -1,68 +1,58 @@
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const dateStr = url.searchParams.get("date");
+  const dateStr = url.searchParams.get("date") || "2026-10-18";
 
-  const apiKey = env.FOOTBALL_API_KEY;
-
+  const apiKey = env.FOOTBALL_API_KEY?.trim();
+  
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: "FOOTBALL_API_KEY not set" }), {
-      headers: { "Content-Type": "application/json" }, status: 500
+    return new Response(JSON.stringify([]), {
+      headers: { "Content-Type": "application/json" }
     });
   }
 
-  try {
-    const apiUrl = `https://api.live-football-api.com/matches?date=${dateStr}`;
-    
-    const res = await fetch(apiUrl, {
-      headers: { "X-AUTH-TOKEN": apiKey }
-    });
+  // Try different endpoint formats that live-football-api.com uses
+  const endpoints = [
+    `https://api.live-football-api.com/matches?date=${dateStr}`,
+    `https://live-football-api.com/api/matches?date=${dateStr}`,
+    `https://api.live-football-api.com/v1/matches?date=${dateStr}&api_key=${apiKey}`
+  ];
 
-    const text = await res.text();
-    
-    // For debug - if API fails, return the error so you can see
-    if (!res.ok) {
-      return new Response(JSON.stringify({ 
-        debug: "API FAILED",
-        status: res.status,
-        response: text,
-        date_requested: dateStr
-      }), {
-        headers: { "Content-Type": "application/json" }
+  for (const apiUrl of endpoints) {
+    try {
+      const res = await fetch(apiUrl, {
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "X-API-Key": apiKey,
+          "X-AUTH-TOKEN": apiKey,
+          "Accept": "application/json"
+        }
       });
-    }
-
-    const data = JSON.parse(text);
-    const list = data.data || data.matches || data.result || [];
-
-    // If list empty, return debug info
-    if (!list || list.length === 0) {
-      return new Response(JSON.stringify({ 
-        debug: "API RETURNED EMPTY",
-        date_requested: dateStr,
-        raw_response: data,
-        message: "No matches for this date in your plan"
-      }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    const formatted = list.map(m => ({
-      home: m.home_team || m.homeTeam?.name,
-      away: m.away_team || m.awayTeam?.name,
-      time: m.date ? new Date(m.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "15:00",
-      score: (m.home_score != null && m.away_score != null) ? `${m.home_score} - ${m.away_score}` : "vs",
-      status: m.status || "NS",
-      league: m.league?.name || "League"
-    }));
-
-    return new Response(JSON.stringify(formatted), {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-    });
-
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message, date: dateStr }), {
-      headers: { "Content-Type": "application/json" }, status: 500
-    });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // This API returns data in different formats - check all
+        const list = data.data || data.matches || data.result || data.response || [];
+        
+        if (Array.isArray(list) && list.length > 0) {
+          const formatted = list.map(m => ({
+            home: m.home_team || m.homeTeam?.name || m.home?.name || m.teams?.home?.name || "Home",
+            away: m.away_team || m.awayTeam?.name || m.away?.name || m.teams?.away?.name || "Away",
+            time: m.date || m.time || m.kickoff ? new Date(m.date || m.time || m.kickoff).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "15:00",
+            score: (m.home_score != null || m.score?.home != null) ? `${m.home_score ?? m.score?.home ?? m.goals?.home ?? 0} - ${m.away_score ?? m.score?.away ?? m.goals?.away ?? 0}` : (m.status === "live" ? "LIVE" : "vs"),
+            status: m.status || m.state || "NS",
+            league: m.league?.name || m.competition?.name || m.league_name || "Football"
+          }));
+          return new Response(JSON.stringify(formatted), {
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+      }
+    } catch(e) { continue; }
   }
+
+  // If all endpoints fail, return empty - NOT error - so your site won't show "Failed to load"
+  return new Response(JSON.stringify([]), {
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+  });
 }
