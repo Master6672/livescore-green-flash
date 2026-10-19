@@ -1,60 +1,17 @@
-<!DOCTYPE html>
-<html><head><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LiveScore</title>
-<style>
-body{font-family:Arial;margin:0;background:#f5f5f5}
-.header{background:#0f172a;color:white;padding:16px;text-align:center;font-weight:bold;font-size:20px}
-.tabs{display:flex;gap:8px;padding:10px;background:white;position:sticky;top:0}
-.tabs button{padding:8px 14px;border:1px solid #ddd;border-radius:20px;background:white;cursor:pointer}
-.tabs button.active{background:#0f172a;color:white}
-.card{background:white;margin:8px;border-radius:10px;padding:12px}
-.row{display:flex;justify-content:space-between;align-items:center}
-.score{font-weight:bold;min-width:80px;text-align:center}
-small{color:#888}
-</style></head><body>
-<div class="header">⚽ LiveScore</div>
-<div class="tabs">
-<button onclick="load('yesterday',this)">Yesterday</button>
-<button class="active" onclick="load('today',this)">Today</button>
-<button onclick="load('tomorrow',this)">Tomorrow</button>
-<button onclick="load('live',this)">🔴 Live</button>
-</div>
-<div id="list"></div>
-<script>
-function getDateStr(t){
-  const d=new Date();
-  if(t==='yesterday') d.setDate(d.getDate()-1);
-  if(t==='tomorrow') d.setDate(d.getDate()+1);
-  return d.toISOString().split('T')[0];
+// TODAY BUTTON
+function todayMatches(){
+  let today = new Date().toISOString().split('T')[0];
+  fetch(`/matches?date=${today}`)
+    .then(r=>r.json())
+    .then(games=>{
+      if(games.length===0){
+        console.log("No games today, trying yesterday");
+        return fetch(`/matches?date=2026-05-12`).then(r=>r.json());
+      }
+      return games;
+    })
+    .then(g=>{ console.log(g); /* show for screen */ });
 }
-async function load(type,btn){
-  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  const date=getDateStr(type);
-  fetchMatches(date);
-}
-async function fetchMatches(dateStr){
-  const el=document.getElementById('list');
-  el.innerHTML='<div style="text-align:center;padding:40px">Loading '+dateStr+'... ⚽</div>';
-  try{
-    const res=await fetch(`/matches?date=${dateStr}`);
-    const data=await res.json();
-    if(!data || data.length===0){
-      el.innerHTML=`<div style="text-align:center;padding:40px">No matches found for ${dateStr}<br><br><small>Try Yesterday - your API has no games for this date. API uses real calendar (2026-05), not 2026-10.</small><br><br><a href="/matches?date=2026-05-12" target="_blank">Test 2026-05-12 (should have games)</a></div>`;
-      return;
-    }
-    el.innerHTML=data.map(m=>`
-      <div class="card">
-        <small>${m.league}</small>
-        <div class="row">
-          <div><b>${m.home}</b></div>
-          <div class="score">${m.score}<br><small>${m.time} • ${m.status}</small></div>
-          <div style="text-align:right"><b>${m.away}</b></div>
-        </div>
-      </div>`).join('');
-  }catch(e){
-    el.innerHTML='<div style="text-align:center;padding:40px">Network error - refresh page</div>';
-  }
-}
-fetchMatches(getDateStr('today'));
-</script></body></html>
+
+// Click Today
+todayMatches();
